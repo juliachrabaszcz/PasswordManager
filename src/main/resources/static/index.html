@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🔐 VaultApp</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0f14;
+      --surface: #161a23;
+      --surface2: #1e2330;
+      --border: #2a3040;
+      --accent: #4f9cf9;
+      --accent2: #a78bfa;
+      --green: #34d399;
+      --red: #f87171;
+      --yellow: #fbbf24;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --radius: 12px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 16px;
+    }
+
+    /* ---- HEADER ---- */
+    header {
+      width: 100%;
+      max-width: 780px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 40px;
+    }
+    .logo { font-family: 'DM Mono', monospace; font-size: 1.2rem; color: var(--accent); letter-spacing: -1px; }
+    #user-bar { font-size: 0.85rem; color: var(--muted); display: flex; align-items: center; gap: 12px; }
+    #user-bar span { color: var(--accent2); font-weight: 500; }
+
+    /* ---- CARD ---- */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      width: 100%;
+      max-width: 440px;
+    }
+    .card h2 { font-size: 1.3rem; font-weight: 600; margin-bottom: 24px; }
+
+    /* ---- TABS ---- */
+    .tabs { display: flex; gap: 4px; margin-bottom: 28px; background: var(--surface2); padding: 4px; border-radius: 8px; }
+    .tab {
+      flex: 1; padding: 8px; border: none; border-radius: 6px;
+      background: transparent; color: var(--muted); font-size: 0.9rem;
+      font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all .2s;
+    }
+    .tab.active { background: var(--surface); color: var(--text); font-weight: 500; }
+
+    /* ---- FORM ---- */
+    .field { margin-bottom: 16px; }
+    label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 6px; letter-spacing: .5px; text-transform: uppercase; }
+    input[type=text], input[type=password] {
+      width: 100%; padding: 10px 14px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-family: 'DM Mono', monospace;
+      font-size: 0.95rem; outline: none; transition: border-color .2s;
+    }
+    input:focus { border-color: var(--accent); }
+
+    /* ---- STRENGTH BAR ---- */
+    .strength-wrap { margin-top: 8px; }
+    .strength-bar { height: 4px; border-radius: 2px; background: var(--surface2); overflow: hidden; }
+    .strength-fill { height: 100%; width: 0; border-radius: 2px; transition: width .3s, background .3s; }
+    .strength-label { font-size: 0.75rem; margin-top: 4px; }
+
+    /* ---- BUTTON ---- */
+    .btn {
+      width: 100%; padding: 11px; border: none; border-radius: 8px;
+      background: var(--accent); color: #fff; font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem; font-weight: 500; cursor: pointer; transition: opacity .2s;
+      margin-top: 8px;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn.secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+    .btn.danger { background: transparent; color: var(--red); border: 1px solid var(--red); }
+
+    /* ---- MESSAGE ---- */
+    .msg { font-size: 0.85rem; margin-top: 12px; padding: 10px 14px; border-radius: 8px; display: none; }
+    .msg.ok { background: #14372a; color: var(--green); display: block; }
+    .msg.err { background: #2d1515; color: var(--red); display: block; }
+
+    /* ---- VAULT SECTION ---- */
+    #vault-section { width: 100%; max-width: 780px; display: none; }
+    #vault-section h2 { font-size: 1.3rem; font-weight: 600; margin-bottom: 20px; }
+
+    .vault-toolbar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+    .vault-toolbar input {
+      flex: 1; min-width: 180px; padding: 9px 14px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem; outline: none;
+    }
+    .vault-toolbar input:focus { border-color: var(--accent); }
+    .vault-toolbar .btn { width: auto; padding: 9px 18px; margin-top: 0; }
+
+    /* ---- ENTRIES ---- */
+    .entries { display: flex; flex-direction: column; gap: 10px; }
+    .entry {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px 20px;
+      display: grid; grid-template-columns: 1fr 1fr 1fr auto;
+      gap: 12px; align-items: center;
+    }
+    .entry-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; margin-bottom: 2px; }
+    .entry-value { font-family: 'DM Mono', monospace; font-size: 0.9rem; word-break: break-all; }
+    .entry-pass { filter: blur(4px); transition: filter .2s; cursor: pointer; }
+    .entry-pass:hover, .entry-pass.show { filter: none; }
+    .entry-actions { display: flex; gap: 6px; }
+    .icon-btn {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 6px; padding: 6px 10px; cursor: pointer;
+      font-size: 0.85rem; color: var(--muted); transition: all .2s;
+    }
+    .icon-btn:hover { color: var(--text); border-color: var(--muted); }
+    .icon-btn.del:hover { color: var(--red); border-color: var(--red); }
+
+    /* ---- ADD ENTRY MODAL ---- */
+    .modal-backdrop {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.6); backdrop-filter: blur(4px);
+      justify-content: center; align-items: center; z-index: 100;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; width: 100%; max-width: 420px; }
+    .modal h3 { margin-bottom: 20px; }
+
+    .gen-row { display: flex; gap: 8px; align-items: flex-end; }
+    .gen-row input { flex: 1; }
+    .gen-row .btn { width: auto; margin-top: 0; padding: 10px 14px; font-size: 0.85rem; }
+
+    /* ---- LOGOUT ---- */
+    #logout-btn {
+      background: none; border: 1px solid var(--border); color: var(--muted);
+      font-family: 'DM Sans', sans-serif; font-size: 0.8rem; padding: 5px 12px;
+      border-radius: 6px; cursor: pointer; transition: all .2s;
+    }
+    #logout-btn:hover { color: var(--text); border-color: var(--muted); }
+
+    .empty-state { text-align: center; padding: 40px; color: var(--muted); font-size: 0.9rem; }
+    .save-indicator { font-size: 0.8rem; color: var(--muted); }
+    .save-indicator.saving { color: var(--yellow); }
+    .save-indicator.saved { color: var(--green); }
+
+    @media (max-width: 600px) {
+      .entry { grid-template-columns: 1fr; }
+      .entry-actions { justify-content: flex-end; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🔐 vault</div>
+  <div id="user-bar" style="display:none">
+    zalogowana jako <span id="username-display"></span>
+    <span id="save-status" class="save-indicator"></span>
+    <button id="logout-btn">wyloguj</button>
+  </div>
+</header>
+
+<!-- ===== AUTH SECTION ===== -->
+<div id="auth-section">
+  <div class="card">
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('login')">Logowanie</button>
+      <button class="tab" onclick="switchTab('register')">Rejestracja</button>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <div id="login-form">
+      <div class="field">
+        <label>Login</label>
+        <input type="text" id="l-user" placeholder="twój login" autocomplete="username">
+      </div>
+      <div class="field">
+        <label>Hasło</label>
+        <input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="btn" onclick="doLogin()">Zaloguj się</button>
+      <div class="msg" id="l-msg"></div>
+    </div>
+
+    <!-- REGISTER FORM -->
+    <div id="register-form" style="display:none">
+      <div class="field">
+        <label>Login</label>
+        <input type="text" id="r-user" placeholder="min. 3 znaki" autocomplete="username">
+      </div>
+      <div class="field">
+        <label>Hasło</label>
+        <input type="password" id="r-pass" placeholder="min. 8 znaków" autocomplete="new-password"
+               oninput="checkStrength(this.value)">
+        <div class="strength-wrap">
+          <div class="strength-bar"><div class="strength-fill" id="str-fill"></div></div>
+          <div class="strength-label" id="str-label"></div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Powtórz hasło</label>
+        <input type="password" id="r-pass2" placeholder="••••••••" autocomplete="new-password">
+      </div>
+      <button class="btn" onclick="doRegister()">Utwórz konto</button>
+      <div class="msg" id="r-msg"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== VAULT SECTION ===== -->
+<div id="vault-section">
+  <div class="vault-toolbar">
+    <input type="text" id="search-input" placeholder="🔍 szukaj po nazwie lub loginie..." oninput="renderEntries()">
+    <button class="btn" onclick="openAddModal()">+ Dodaj hasło</button>
+  </div>
+  <div class="entries" id="entries-list">
+    <div class="empty-state">Brak zapisanych haseł. Kliknij „+ Dodaj hasło".</div>
+  </div>
+</div>
+
+<!-- ===== ADD/EDIT MODAL ===== -->
+<div class="modal-backdrop" id="modal">
+  <div class="modal">
+    <h3 id="modal-title">Dodaj hasło</h3>
+    <div class="field">
+      <label>Nazwa / strona</label>
+      <input type="text" id="m-name" placeholder="np. Gmail, Allegro...">
+    </div>
+    <div class="field">
+      <label>Login / e-mail</label>
+      <input type="text" id="m-login" placeholder="login lub adres e-mail" autocomplete="off">
+    </div>
+    <div class="field">
+      <label>Hasło</label>
+      <div class="gen-row">
+        <input type="text" id="m-pass" placeholder="hasło" autocomplete="off">
+        <button class="btn secondary" onclick="generatePassword()">🎲 generuj</button>
+      </div>
+      <div class="strength-wrap" style="margin-top:8px">
+        <div class="strength-bar"><div class="strength-fill" id="mstr-fill"></div></div>
+        <div class="strength-label" id="mstr-label"></div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Notatka (opcjonalnie)</label>
+      <input type="text" id="m-note" placeholder="np. konto prywatne">
+    </div>
+    <div style="display:flex;gap:10px;margin-top:4px">
+      <button class="btn" onclick="saveEntry()">Zapisz</button>
+      <button class="btn secondary" onclick="closeModal()">Anuluj</button>
+    </div>
+  </div>
+</div>
+<script>
+  // ============================================================
+  //  KRYPTOGRAFIA (Web Crypto API)
+  // ============================================================
+  async function deriveKey(password, salt) {
+    const enc = new TextEncoder();
+    const keyMaterial = await window.crypto.subtle.importKey("raw", enc.encode(password), {name: "PBKDF2"}, false, ["deriveKey"]);
+    const saltBytes = enc.encode(salt);
+    return window.crypto.subtle.deriveKey(
+            { name: "PBKDF2", salt: saltBytes, iterations: 100000, hash: "SHA-256" },
+            keyMaterial, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]
+    );
+  }
+
+  async function encryptData(text, key) {
+    const iv = window.crypto.getRandomValues(new Uint8Array(12));
+    const enc = new TextEncoder();
+    const encrypted = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, enc.encode(text));
+    return {
+      iv: btoa(String.fromCharCode(...iv)),
+      ciphertext: btoa(String.fromCharCode(...new Uint8Array(encrypted)))
+    };
+  }
+
+  async function decryptData(ciphertextB64, ivB64, key) {
+    const iv = new Uint8Array(atob(ivB64).split('').map(c => c.charCodeAt(0)));
+    const ciphertext = new Uint8Array(atob(ciphertextB64).split('').map(c => c.charCodeAt(0)));
+    const decrypted = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv: iv }, key, ciphertext);
+    return new TextDecoder().decode(decrypted);
+  }
+
+  // ============================================================
+  //  STATE (Stan aplikacji)
+  // ============================================================
+  let currentUser = null;
+  let currentKey = null;   // KLUCZ AES W PAMIĘCI RAM
+  let vaultData = { entries: [] }; // Formatujemy jako obiekt, by łatwiej szyfrować
+  let editingId = null;
+  let saveTimeout = null;
+
+  // ============================================================
+  //  AUTH (Logowanie i Rejestracja)
+  // ============================================================
+  function switchTab(tab) {
+    document.getElementById('login-form').style.display = tab === 'login' ? '' : 'none';
+    document.getElementById('register-form').style.display = tab === 'register' ? '' : 'none';
+    document.querySelectorAll('.tab').forEach((t, i) => {
+      t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register'));
+    });
+  }
+
+  async function doLogin() {
+    const username = document.getElementById('l-user').value.trim();
+    const password = document.getElementById('l-pass').value;
+    const msg = document.getElementById('l-msg');
+
+    try {
+      const res = await fetch('/api/users/login', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ username, password }),
+        credentials: 'include'
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        currentUser = username;
+        // 1. GENERUJEMY KLUCZ Z HASŁA GŁÓWNEGO
+        currentKey = await deriveKey(password, data.salt);
+
+        await loadVault();
+        showVault();
+      } else {
+        showMsg(msg, 'err', data.error || 'Błąd logowania');
+      }
+    } catch(e) {
+      showMsg(msg, 'err', 'Błąd połączenia z serwerem');
+    }
+  }
+
+  async function doRegister() {
+    const username = document.getElementById('r-user').value.trim();
+    const password = document.getElementById('r-pass').value;
+    const password2 = document.getElementById('r-pass2').value;
+    const msg = document.getElementById('r-msg');
+
+    if (password !== password2) return showMsg(msg, 'err', 'Hasła się nie zgadzają');
+
+    try {
+      const res = await fetch('/api/users/register', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showMsg(msg, 'ok', 'Konto utworzone! Możesz się teraz zalogować.');
+        setTimeout(() => switchTab('login'), 1500);
+      } else {
+        showMsg(msg, 'err', data.error || 'Błąd rejestracji');
+      }
+    } catch(e) {
+      showMsg(msg, 'err', 'Błąd połączenia z serwerem');
+    }
+  }
+
+  document.getElementById('logout-btn').onclick = () => {
+    // CZYSZCZENIE PAMIĘCI RAM Z KLUCZA
+    currentKey = null;
+    currentUser = null;
+    vaultData = { entries: [] };
+
+    document.getElementById('vault-section').style.display = 'none';
+    document.getElementById('auth-section').style.display = '';
+    document.getElementById('user-bar').style.display = 'none';
+    document.getElementById('l-pass').value = '';
+  };
+
+  // ============================================================
+  //  VAULT LOAD / SAVE
+  // ============================================================
+  async function loadVault() {
+    try {
+      const res = await fetch(`/api/vault/${currentUser}`, { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+
+        // DESZYFROWANIE
+        if (data.encryptedData) {
+          const parsedBlob = JSON.parse(data.encryptedData);
+          const decryptedStr = await decryptData(parsedBlob.ciphertext, parsedBlob.iv, currentKey);
+          vaultData = JSON.parse(decryptedStr);
+        } else {
+          vaultData = { entries: [] };
+        }
+      }
+    } catch(e) {
+      console.error("Błąd dekryptażu lub pobierania:", e);
+      vaultData = { entries: [] };
+      alert("Odmowa dostępu: Błędne hasło główne lub błąd pobierania.");
+    }
+  }
+
+  function scheduleSave() {
+    const status = document.getElementById('save-status');
+    status.className = 'save-indicator saving';
+    status.textContent = '● zapisywanie...';
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(saveVault, 1000);
+  }
+
+  async function saveVault() {
+    try {
+      // SZYFROWANIE CAŁEGO SEJFU
+      const jsonStr = JSON.stringify(vaultData);
+      const encrypted = await encryptData(jsonStr, currentKey);
+
+      // Pakujemy wektor (IV) i reszte w jednego stringa, żeby pasowało
+      const blobToSave = JSON.stringify({ ciphertext: encrypted.ciphertext, iv: encrypted.iv });
+
+      await fetch(`/api/vault/${currentUser}`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        credentials: 'include',
+        body: JSON.stringify({ encryptedData: blobToSave })
+      });
+
+      const status = document.getElementById('save-status');
+      status.className = 'save-indicator saved';
+      status.textContent = '✓ zapisano';
+      setTimeout(() => { status.textContent = ''; status.className = 'save-indicator'; }, 2000);
+    } catch(e) {
+      document.getElementById('save-status').textContent = '⚠ błąd zapisu';
+    }
+  }
+
+  // ============================================================
+  //  VAULT UI
+  // ============================================================
+  function showVault() {
+    document.getElementById('auth-section').style.display = 'none';
+    document.getElementById('vault-section').style.display = '';
+    document.getElementById('user-bar').style.display = 'flex';
+    document.getElementById('username-display').textContent = currentUser;
+    renderEntries();
+  }
+
+  function renderEntries() {
+    const q = document.getElementById('search-input').value.toLowerCase();
+    const list = document.getElementById('entries-list');
+    const filtered = vaultData.entries.filter(e =>
+            e.name.toLowerCase().includes(q) || e.login.toLowerCase().includes(q)
+    );
+
+    if (filtered.length === 0) {
+      list.innerHTML = '<div class="empty-state">' +
+              (q ? 'Brak wyników dla „' + q + '"' : 'Brak zapisanych haseł. Kliknij „+ Dodaj hasło".') +
+              '</div>';
+      return;
+    }
+
+    list.innerHTML = filtered.map(e => `
+    <div class="entry">
+      <div><div class="entry-label">Strona / nazwa</div><div class="entry-value">${esc(e.name)}</div></div>
+      <div><div class="entry-label">Login</div><div class="entry-value">${esc(e.login)}</div></div>
+      <div>
+        <div class="entry-label">Hasło <span style="font-size:.7rem;color:var(--muted)">(najedź aby pokazać)</span></div>
+        <div class="entry-value entry-pass" title="kliknij aby pokazać/ukryć" onclick="this.classList.toggle('show')">${esc(e.password)}</div>
+      </div>
+      <div class="entry-actions">
+        <button class="icon-btn" onclick="copyPass('${esc(e.id)}')" title="Kopiuj hasło">📋</button>
+        <button class="icon-btn" onclick="editEntry('${esc(e.id)}')" title="Edytuj">✏️</button>
+        <button class="icon-btn del" onclick="deleteEntry('${esc(e.id)}')" title="Usuń">🗑</button>
+      </div>
+    </div>
+  `).join('');
+  }
+
+  function copyPass(id) {
+    const entry = vaultData.entries.find(e => e.id === id);
+    if (entry) navigator.clipboard.writeText(entry.password);
+  }
+
+  function deleteEntry(id) {
+    if (!confirm('Usunąć ten wpis?')) return;
+    vaultData.entries = vaultData.entries.filter(e => e.id !== id);
+    renderEntries();
+    scheduleSave();
+  }
+
+  function editEntry(id) {
+    const entry = vaultData.entries.find(e => e.id === id);
+    if (!entry) return;
+    editingId = id;
+    document.getElementById('modal-title').textContent = 'Edytuj hasło';
+    document.getElementById('m-name').value = entry.name;
+    document.getElementById('m-login').value = entry.login;
+    document.getElementById('m-pass').value = entry.password;
+    document.getElementById('m-note').value = entry.note || '';
+    checkStrengthModal(entry.password);
+    document.getElementById('modal').classList.add('open');
+  }
+
+  function openAddModal() {
+    editingId = null;
+    document.getElementById('modal-title').textContent = 'Dodaj hasło';
+    document.getElementById('m-name').value = '';
+    document.getElementById('m-login').value = '';
+    document.getElementById('m-pass').value = '';
+    document.getElementById('m-note').value = '';
+    document.getElementById('mstr-fill').style.width = '0';
+    document.getElementById('mstr-label').textContent = '';
+    document.getElementById('modal').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('modal').classList.remove('open');
+  }
+
+  document.getElementById('modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal')) closeModal();
+  });
+
+  document.getElementById('m-pass').addEventListener('input', e => checkStrengthModal(e.target.value));
+
+  function saveEntry() {
+    const name = document.getElementById('m-name').value.trim();
+    const login = document.getElementById('m-login').value.trim();
+    const password = document.getElementById('m-pass').value;
+    const note = document.getElementById('m-note').value.trim();
+
+    if (!name || !login || !password) {
+      alert('Wypełnij nazwę, login i hasło.');
+      return;
+    }
+
+    if (editingId) {
+      const entry = vaultData.entries.find(e => e.id === editingId);
+      if (entry) Object.assign(entry, { name, login, password, note });
+    } else {
+      vaultData.entries.push({ id: crypto.randomUUID(), name, login, password, note });
+    }
+
+    closeModal();
+    renderEntries();
+    scheduleSave();
+  }
+
+  // ============================================================
+  //  PASSWORD GENERATOR
+  // ============================================================
+  function generatePassword() {
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[]{}';
+    let pass = '';
+    const arr = new Uint8Array(20);
+    crypto.getRandomValues(arr);
+    arr.forEach(b => { pass += chars[b % chars.length]; });
+    document.getElementById('m-pass').value = pass;
+    checkStrengthModal(pass);
+  }
+
+  // ============================================================
+  //  STRENGTH CHECKER
+  // ============================================================
+  function strengthScore(pass) {
+    let s = 0;
+    if (pass.length >= 8) s++;
+    if (pass.length >= 12) s++;
+    if (pass.length >= 16) s++;
+    if (/[a-z]/.test(pass) && /[A-Z]/.test(pass)) s++;
+    if (/[0-9]/.test(pass)) s++;
+    if (/[^a-zA-Z0-9]/.test(pass)) s++;
+    return Math.min(s, 5);
+  }
+
+  const LEVELS = [
+    { label: '', color: '' },
+    { label: 'Bardzo słabe', color: '#ef4444' },
+    { label: 'Słabe', color: '#f97316' },
+    { label: 'Średnie', color: 'var(--yellow)' },
+    { label: 'Mocne', color: '#86efac' },
+    { label: 'Bardzo mocne', color: 'var(--green)' },
+  ];
+
+  function checkStrength(pass) {
+    const s = pass ? strengthScore(pass) : 0;
+    const fill = document.getElementById('str-fill');
+    const label = document.getElementById('str-label');
+    fill.style.width = (s * 20) + '%';
+    fill.style.background = LEVELS[s].color;
+    label.textContent = LEVELS[s].label;
+    label.style.color = LEVELS[s].color;
+  }
+
+  function checkStrengthModal(pass) {
+    const s = pass ? strengthScore(pass) : 0;
+    const fill = document.getElementById('mstr-fill');
+    const label = document.getElementById('mstr-label');
+    fill.style.width = (s * 20) + '%';
+    fill.style.background = LEVELS[s].color;
+    label.textContent = LEVELS[s].label;
+    label.style.color = LEVELS[s].color;
+  }
+
+  // ============================================================
+  //  UTILS
+  // ============================================================
+  function showMsg(el, type, text) {
+    el.className = 'msg ' + type;
+    el.textContent = text;
+  }
+
+  function esc(str) {
+    return String(str)
+            .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+            .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  document.getElementById('l-pass').addEventListener('keydown', e => { if (e.key==='Enter') doLogin(); });
+  document.getElementById('r-pass2').addEventListener('keydown', e => { if (e.key==='Enter') doRegister(); });
+</script>
+</body>
+</html>
+
