@@ -175,7 +175,7 @@
 <header>
   <div class="logo">🔐 vault</div>
   <div id="user-bar" style="display:none">
-    Zalogowano jako<span id="username-display"></span>
+    Zalogowano jako: <span id="username-display"></span>
     <span id="save-status" class="save-indicator"></span>
     <button id="logout-btn">Wyloguj</button>
   </div>
@@ -311,6 +311,7 @@
   let vaultData = { entries: [] }; // Formatujemy jako obiekt, by łatwiej szyfrować
   let editingId = null;
   let saveTimeout = null;
+  let deletingId = null;
 
   // ============================================================
   //  AUTH (Logowanie i Rejestracja)
@@ -440,7 +441,7 @@
 
       const status = document.getElementById('save-status');
       status.className = 'save-indicator saved';
-      status.textContent = '✓ zapisano';
+      status.textContent = 'Zapisano';
       setTimeout(() => { status.textContent = ''; status.className = 'save-indicator'; }, 2000);
     } catch(e) {
       document.getElementById('save-status').textContent = '⚠ błąd zapisu';
@@ -505,8 +506,23 @@
   }
 
   function deleteEntry(id) {
-    if (!confirm('Usunąć ten wpis?')) return;
-    vaultData.entries = vaultData.entries.filter(e => e.id !== id);
+    openDeleteModal(id);
+  }
+
+  function openDeleteModal(id) {
+    deletingId = id;
+    document.getElementById('delete-modal').classList.add('open');
+  }
+
+  function closeDeleteModal() {
+    deletingId = null;
+    document.getElementById('delete-modal').classList.remove('open');
+  }
+
+  function confirmDelete() {
+    if (!deletingId) return;
+    vaultData.entries = vaultData.entries.filter(e => e.id !== deletingId);
+    closeDeleteModal();
     renderEntries();
     scheduleSave();
   }
@@ -642,6 +658,16 @@
   document.getElementById('l-pass').addEventListener('keydown', e => { if (e.key==='Enter') doLogin(); });
   document.getElementById('r-pass2').addEventListener('keydown', e => { if (e.key==='Enter') doRegister(); });
 </script>
+<div class="modal-backdrop" id="delete-modal">
+  <div class="modal">
+    <h3>Usuń wpis</h3>
+    <p style="color:var(--muted);margin-bottom:20px">Czy na pewno chcesz usunąć ten wpis? Tej operacji nie można cofnąć.</p>
+    <div style="display:flex;gap:10px">
+      <button class="btn danger" onclick="confirmDelete()">Usuń</button>
+      <button class="btn secondary" onclick="closeDeleteModal()">Anuluj</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
 
