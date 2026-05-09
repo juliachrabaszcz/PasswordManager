@@ -125,13 +125,14 @@
     }
     .entry-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; margin-bottom: 2px; }
     .entry-value { font-family: 'DM Mono', monospace; font-size: 0.9rem; word-break: break-all; }
-    .entry-pass { filter: blur(4px); transition: filter .2s; cursor: pointer; }
-    .entry-pass:hover, .entry-pass.show { filter: none; }
-    .entry-actions { display: flex; gap: 6px; }
+    .entry-pass { filter: blur(4px); cursor: pointer; }
+    .entry-pass.show { filter: none; }
+    .entry-actions { display: flex; gap: 6px; align-items: center; align-self: center; }
     .icon-btn {
       background: var(--surface2); border: 1px solid var(--border);
       border-radius: 6px; padding: 6px 10px; cursor: pointer;
       font-size: 0.85rem; color: var(--muted); transition: all .2s;
+      display: flex; align-items: center; justify-content: center;
     }
     .icon-btn:hover { color: var(--text); border-color: var(--muted); }
     .icon-btn.del:hover { color: var(--red); border-color: var(--red); }
@@ -174,9 +175,9 @@
 <header>
   <div class="logo">🔐 vault</div>
   <div id="user-bar" style="display:none">
-    zalogowana jako <span id="username-display"></span>
+    Zalogowano jako<span id="username-display"></span>
     <span id="save-status" class="save-indicator"></span>
-    <button id="logout-btn">wyloguj</button>
+    <button id="logout-btn">Wyloguj</button>
   </div>
 </header>
 
@@ -192,7 +193,7 @@
     <div id="login-form">
       <div class="field">
         <label>Login</label>
-        <input type="text" id="l-user" placeholder="twój login" autocomplete="username">
+        <input type="text" id="l-user" placeholder="Twój login" autocomplete="username">
       </div>
       <div class="field">
         <label>Hasło</label>
@@ -206,11 +207,11 @@
     <div id="register-form" style="display:none">
       <div class="field">
         <label>Login</label>
-        <input type="text" id="r-user" placeholder="min. 3 znaki" autocomplete="username">
+        <input type="text" id="r-user" placeholder="Min. 3 znaki" autocomplete="username">
       </div>
       <div class="field">
         <label>Hasło</label>
-        <input type="password" id="r-pass" placeholder="min. 8 znaków" autocomplete="new-password"
+        <input type="password" id="r-pass" placeholder="Min. 8 znaków" autocomplete="new-password"
                oninput="checkStrength(this.value)">
         <div class="strength-wrap">
           <div class="strength-bar"><div class="strength-fill" id="str-fill"></div></div>
@@ -230,7 +231,7 @@
 <!-- ===== VAULT SECTION ===== -->
 <div id="vault-section">
   <div class="vault-toolbar">
-    <input type="text" id="search-input" placeholder="🔍 szukaj po nazwie lub loginie..." oninput="renderEntries()">
+    <input type="text" id="search-input" placeholder="🔍 Szukaj po nazwie lub loginie..." oninput="renderEntries()">
     <button class="btn" onclick="openAddModal()">+ Dodaj hasło</button>
   </div>
   <div class="entries" id="entries-list">
@@ -385,6 +386,7 @@
     document.getElementById('auth-section').style.display = '';
     document.getElementById('user-bar').style.display = 'none';
     document.getElementById('l-pass').value = '';
+    document.getElementById('l-user').value = '';
   };
 
   // ============================================================
@@ -450,7 +452,7 @@
   // ============================================================
   function showVault() {
     document.getElementById('auth-section').style.display = 'none';
-    document.getElementById('vault-section').style.display = '';
+    document.getElementById('vault-section').style.display = 'block';
     document.getElementById('user-bar').style.display = 'flex';
     document.getElementById('username-display').textContent = currentUser;
     renderEntries();
@@ -475,11 +477,13 @@
       <div><div class="entry-label">Strona / nazwa</div><div class="entry-value">${esc(e.name)}</div></div>
       <div><div class="entry-label">Login</div><div class="entry-value">${esc(e.login)}</div></div>
       <div>
-        <div class="entry-label">Hasło <span style="font-size:.7rem;color:var(--muted)">(najedź aby pokazać)</span></div>
-        <div class="entry-value entry-pass" title="kliknij aby pokazać/ukryć" onclick="this.classList.toggle('show')">${esc(e.password)}</div>
+        <div class="entry-label">Hasło <span style="font-size:.7rem;color:var(--muted)">(Kliknij aby pokazać)</span></div>
+        <div class="entry-value entry-pass" title="kliknij aby pokazać/ukryć"
+     data-password="${esc(e.password)}"
+     onclick="this.classList.toggle('show'); this.textContent = this.classList.contains('show') ? this.dataset.password : '••••••••'">••••••••</div>
       </div>
       <div class="entry-actions">
-        <button class="icon-btn" onclick="copyPass('${esc(e.id)}')" title="Kopiuj hasło">📋</button>
+        <button class="icon-btn" onclick="copyPass('${esc(e.id)}', this)" title="Kopiuj hasło">📋</button>
         <button class="icon-btn" onclick="editEntry('${esc(e.id)}')" title="Edytuj">✏️</button>
         <button class="icon-btn del" onclick="deleteEntry('${esc(e.id)}')" title="Usuń">🗑</button>
       </div>
@@ -487,9 +491,17 @@
   `).join('');
   }
 
-  function copyPass(id) {
+  function copyPass(id, btn) {
     const entry = vaultData.entries.find(e => e.id === id);
-    if (entry) navigator.clipboard.writeText(entry.password);
+    if (!entry) return;
+    navigator.clipboard.writeText(entry.password);
+    const original = btn.textContent;
+    btn.textContent = 'Skopiowano!';
+    btn.style.color = 'var(--green)';
+    setTimeout(() => {
+      btn.textContent = original;
+      btn.style.color = '';
+    }, 1500);
   }
 
   function deleteEntry(id) {
