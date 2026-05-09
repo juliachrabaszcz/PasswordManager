@@ -97,7 +97,7 @@
     .btn.danger { background: transparent; color: var(--red); border: 1px solid var(--red); }
 
     /* ---- MESSAGE ---- */
-    .msg { font-size: 0.85rem; margin-top: 12px; padding: 10px 14px; border-radius: 8px; display: none; }
+    .msg { font-size: 0.85rem; margin-top: 16px; padding: 8px 14px; border-radius: 8px; display: none; }
     .msg.ok { background: #14372a; color: var(--green); display: block; }
     .msg.err { background: #2d1515; color: var(--red); display: block; }
 
@@ -244,18 +244,18 @@
   <div class="modal">
     <h3 id="modal-title">Dodaj hasło</h3>
     <div class="field">
-      <label>Nazwa / strona</label>
+      <label>Nazwa / strona*</label>
       <input type="text" id="m-name" placeholder="np. Gmail, Allegro...">
     </div>
     <div class="field">
-      <label>Login / e-mail</label>
-      <input type="text" id="m-login" placeholder="login lub adres e-mail" autocomplete="off">
+      <label>Login / E-mail*</label>
+      <input type="text" id="m-login" placeholder="Login lub adres e-mail" autocomplete="off">
     </div>
     <div class="field">
-      <label>Hasło</label>
+      <label>Hasło*</label>
       <div class="gen-row">
-        <input type="text" id="m-pass" placeholder="hasło" autocomplete="off">
-        <button class="btn secondary" onclick="generatePassword()">🎲 generuj</button>
+        <input type="text" id="m-pass" placeholder="Hasło" autocomplete="off">
+        <button class="btn secondary" onclick="generatePassword()">🎲 Generuj</button>
       </div>
       <div class="strength-wrap" style="margin-top:8px">
         <div class="strength-bar"><div class="strength-fill" id="mstr-fill"></div></div>
@@ -264,8 +264,10 @@
     </div>
     <div class="field">
       <label>Notatka (opcjonalnie)</label>
-      <input type="text" id="m-note" placeholder="np. konto prywatne">
+      <input type="text" id="m-note" placeholder="np. Konto prywatne">
     </div>
+    <div class="msg" id="modal-msg" style="margin-bottom:16px"></div>
+    <p style="font-size:0.75rem;color:var(--muted);margin-bottom:8px">* Pole wymagane</p>
     <div style="display:flex;gap:10px;margin-top:4px">
       <button class="btn" onclick="saveEntry()">Zapisz</button>
       <button class="btn secondary" onclick="closeModal()">Anuluj</button>
@@ -319,6 +321,10 @@
   function switchTab(tab) {
     document.getElementById('login-form').style.display = tab === 'login' ? '' : 'none';
     document.getElementById('register-form').style.display = tab === 'register' ? '' : 'none';
+    document.getElementById('l-msg').className = 'msg';
+    document.getElementById('l-msg').textContent = '';
+    document.getElementById('r-msg').className = 'msg';
+    document.getElementById('r-msg').textContent = '';
     document.querySelectorAll('.tab').forEach((t, i) => {
       t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register'));
     });
@@ -388,6 +394,10 @@
     document.getElementById('user-bar').style.display = 'none';
     document.getElementById('l-pass').value = '';
     document.getElementById('l-user').value = '';
+    document.getElementById('l-msg').className = 'msg';
+    document.getElementById('l-msg').textContent = '';
+    document.getElementById('r-msg').className = 'msg';
+    document.getElementById('r-msg').textContent = '';
   };
 
   // ============================================================
@@ -456,6 +466,10 @@
     document.getElementById('vault-section').style.display = 'block';
     document.getElementById('user-bar').style.display = 'flex';
     document.getElementById('username-display').textContent = currentUser;
+    document.getElementById('l-msg').className = 'msg';
+    document.getElementById('l-msg').textContent = '';
+    document.getElementById('r-msg').className = 'msg';
+    document.getElementById('r-msg').textContent = '';
     renderEntries();
   }
 
@@ -549,6 +563,8 @@
     document.getElementById('m-note').value = '';
     document.getElementById('mstr-fill').style.width = '0';
     document.getElementById('mstr-label').textContent = '';
+    document.getElementById('modal-msg').className = 'msg';
+    document.getElementById('modal-msg').textContent = '';
     document.getElementById('modal').classList.add('open');
   }
 
@@ -569,7 +585,7 @@
     const note = document.getElementById('m-note').value.trim();
 
     if (!name || !login || !password) {
-      alert('Wypełnij nazwę, login i hasło.');
+      showMsg(document.getElementById('modal-msg'), 'err', 'Wypełnij wszystkie wymagane pola.');
       return;
     }
 
