@@ -56,6 +56,7 @@
       padding: 32px;
       width: 100%;
       max-width: 440px;
+      overflow: hidden;
     }
     .card h2 { font-size: 1.3rem; font-weight: 600; margin-bottom: 24px; }
 
@@ -97,7 +98,7 @@
     .btn.danger { background: transparent; color: var(--red); border: 1px solid var(--red); }
 
     /* ---- MESSAGE ---- */
-    .msg { font-size: 0.85rem; margin-top: 16px; padding: 8px 14px; border-radius: 8px; display: none; }
+    .msg { font-size: 0.85rem; margin-top: 16px; padding: 8px 14px; border-radius: 8px; display: none; white-space: pre-line; word-break: break-word; max-width: 100%; text-align: center; }
     .msg.ok { background: #14372a; color: var(--green); display: block; }
     .msg.err { background: #2d1515; color: var(--red); display: block; }
 
@@ -193,11 +194,11 @@
     <div id="login-form">
       <div class="field">
         <label>Login</label>
-        <input type="text" id="l-user" placeholder="Twój login" autocomplete="username">
+        <input type="text" id="l-user" placeholder="Twój login" autocomplete="username" oninput="clearLoginMsg()">
       </div>
       <div class="field">
         <label>Hasło</label>
-        <input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password">
+        <input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password" oninput="clearLoginMsg()">
       </div>
       <button class="btn" onclick="doLogin()">Zaloguj się</button>
       <div class="msg" id="l-msg"></div>
@@ -330,6 +331,12 @@
     });
   }
 
+  function clearLoginMsg() {
+    const msg = document.getElementById('l-msg');
+    msg.className = 'msg';
+    msg.textContent = '';
+  }
+
   async function doLogin() {
     const username = document.getElementById('l-user').value.trim();
     const password = document.getElementById('l-pass').value;
@@ -351,7 +358,12 @@
         await loadVault();
         showVault();
       } else {
-        showMsg(msg, 'err', data.error || 'Błąd logowania');
+        msg.className = 'msg';
+        msg.textContent = '';
+        await new Promise(r => setTimeout(r, 150));
+        msg.className = 'msg err';
+        msg.innerHTML = (data.error || 'Błąd logowania').replace('. ', '.<br>');
+        msg.style.display = 'block';
       }
     } catch(e) {
       showMsg(msg, 'err', 'Błąd połączenia z serwerem');

@@ -30,8 +30,14 @@ public class SecurityConfig {
                 .formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable())
                 // Wymagane do poprawnego działania konsoli H2
-                .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
-
+                .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
+                .exceptionHandling(ex -> ex
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(403);
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.getWriter().write("{\"error\":\"Brak dostępu\"}");
+                        })
+                );
         return http.build();
     }
 
