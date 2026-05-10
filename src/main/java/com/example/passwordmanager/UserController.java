@@ -47,6 +47,8 @@ public class UserController {
                 java.security.SecureRandom.getInstanceStrong().generateSeed(32)
         );
         user.setSalt(salt);
+        user.setRole("USER");
+        user.setCreatedAt(LocalDateTime.now());
         userRepository.save(user);
 
         return ResponseEntity.ok(Map.of("status", "Konto utworzone"));
@@ -63,12 +65,18 @@ public class UserController {
         String username = body.get("username");
         String password = body.get("password");
 
+        if (username == null || username.isBlank() || password == null || password.isBlank())
+            return ResponseEntity.status(401).body(Map.of("error", "Nieprawidłowe dane logowania"));
+
         Optional<User> userOpt = userRepository.findById(username);
 
         if (userOpt.isEmpty())
             return ResponseEntity.status(401).body(Map.of("error", "Nieprawidłowe dane logowania"));
 
         User user = userOpt.get();
+
+        if (user.isManuallyLocked())
+            return ResponseEntity.status(403).body(Map.of("error", "Twoje konto zostało zablokowane.\nSkontaktuj się z administratorem."));
 
         if (user.getLockedUntil() != null && user.getLockedUntil().isAfter(LocalDateTime.now())) {
             long minutesLeft = java.time.Duration.between(LocalDateTime.now(), user.getLockedUntil()).toMinutes() + 1;
@@ -90,6 +98,7 @@ public class UserController {
 
         user.setFailedAttempts(0);
         user.setLockedUntil(null);
+        user.setLastLogin(LocalDateTime.now());
         userRepository.save(user);
 
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(username, null, new ArrayList<>());

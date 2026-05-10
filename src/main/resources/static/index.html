@@ -207,11 +207,11 @@
     <!-- REGISTER FORM -->
     <div id="register-form" style="display:none">
       <div class="field">
-        <label>Login</label>
+        <label>Login*</label>
         <input type="text" id="r-user" placeholder="Min. 3 znaki" autocomplete="username">
       </div>
       <div class="field">
-        <label>Hasło</label>
+        <label>Hasło*</label>
         <input type="password" id="r-pass" placeholder="Min. 8 znaków" autocomplete="new-password"
                oninput="checkStrength(this.value)">
         <div class="strength-wrap">
@@ -220,7 +220,7 @@
         </div>
       </div>
       <div class="field">
-        <label>Powtórz hasło</label>
+        <label>Powtórz hasło*</label>
         <input type="password" id="r-pass2" placeholder="••••••••" autocomplete="new-password">
       </div>
       <button class="btn" onclick="doRegister()">Utwórz konto</button>

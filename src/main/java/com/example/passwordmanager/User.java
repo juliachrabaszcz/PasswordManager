@@ -20,6 +20,14 @@ public class User {
 
     private LocalDateTime lockedUntil;
 
+    private String role;
+
+    private LocalDateTime createdAt;
+
+    private LocalDateTime lastLogin;
+
+    private boolean manuallyLocked;
+
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
 
@@ -34,4 +42,16 @@ public class User {
 
     public LocalDateTime getLockedUntil() { return lockedUntil; }
     public void setLockedUntil(LocalDateTime lockedUntil) { this.lockedUntil = lockedUntil; }
+
+    public String getRole() { return role; }
+    public void setRole(String role) { this.role = role; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public LocalDateTime getLastLogin() { return lastLogin; }
+    public void setLastLogin(LocalDateTime lastLogin) { this.lastLogin = lastLogin; }
+
+    public boolean isManuallyLocked() { return manuallyLocked; }
+    public void setManuallyLocked(boolean manuallyLocked) { this.manuallyLocked = manuallyLocked; }
 }
