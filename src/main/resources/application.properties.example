@@ -1,0 +1,37 @@
+# Serwer
+server.address=0.0.0.0
+server.port=8443
+
+# Baza danych H2 zapisywana do pliku (dane zostają po restarcie)
+spring.datasource.url=jdbc:h2:file:./vaultdb
+spring.datasource.driver-class-name=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=
+spring.jpa.hibernate.ddl-auto=update
+
+# H2 Console - lokalnie (http://localhost:8443/h2-console)
+spring.h2.console.enabled=true
+spring.h2.console.path=/h2-console
+spring.h2.console.settings.web-allow-others=false
+
+# Bezpieczeństwo ciasteczek
+server.servlet.session.cookie.http-only=true
+server.servlet.session.cookie.same-site=strict
+
+# Konfiguracja błędów
+server.error.include-stacktrace=never
+server.error.include-message=never
+
+# Logi
+logging.level.root=WARN
+logging.level.com.example.passwordmanager=INFO
+
+# Włączenie SSL
+server.ssl.key-store=classpath:keystore.p12
+server.ssl.key-store-password=[HASLO_KEYSTORE]
+server.ssl.key-store-type=pkcs12
+server.ssl.key-alias=securevault
+
+# Hasło admina tworzonego automatycznie przy utworzeniu bazy
+admin.default.password=[HASLO_ADMIN]
+

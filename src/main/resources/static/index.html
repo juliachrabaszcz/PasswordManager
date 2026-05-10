@@ -2,8 +2,9 @@
 <html lang="pl" xmlns:max-width="http://www.w3.org/1999/xhtml">
 <head>
   <meta charset="UTF-8">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔐</text></svg>">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🔐 VaultApp</title>
+  <title>VaultApp</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
 
@@ -515,6 +516,19 @@
     <!-- ZAKŁADKA: Zarządzanie użytkownikami (tylko admin) -->
     <div class="tab-panel" id="panel-users">
       <p class="panel-title">Zarządzanie użytkownikami</p>
+      <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
+        <input type="text" id="users-search" placeholder="🔍 Szukaj po loginie..." oninput="filterUsers()"
+               style="flex:1;min-width:180px;max-width:400px;padding:9px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.9rem;outline:none;">
+        <div style="position:relative;display:inline-flex;align-items:center;">
+          <select id="users-role-filter" onchange="filterUsers()"
+                  style="padding:9px 36px 9px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.9rem;outline:none;cursor:pointer;appearance:none;-webkit-appearance:none;">
+            <option value="">Wszystkie role</option>
+            <option value="ADMIN">Administrator</option>
+            <option value="USER">Użytkownik</option>
+          </select>
+          <span style="position:absolute;right:12px;pointer-events:none;color:var(--muted);">▾</span>
+        </div>
+      </div>
       <div class="users-table-wrap">
         <table class="users-table">
           <thead>
@@ -1188,6 +1202,27 @@
 
       panel.innerHTML = `
       <p class="panel-title">Dziennik zdarzeń</p>
+      <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
+        <input type="text" id="logs-search" placeholder="🔍 Szukaj po loginie..." oninput="filterLogs()"
+          style="flex:1;min-width:180px;max-width:400px;padding:9px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.9rem;outline:none;">
+        <div style="position:relative;display:inline-flex;align-items:center;">
+          <select id="logs-event-filter" onchange="filterLogs()"
+            style="padding:9px 36px 9px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.9rem;outline:none;cursor:pointer;appearance:none;-webkit-appearance:none;">
+            <option value="">Wszystkie zdarzenia</option>
+            <option value="LOGIN_SUCCESS">Udane logowanie</option>
+            <option value="LOGIN_FAILED">Nieudana próba logowania</option>
+            <option value="LOGIN_FAILED_LOCKED">Konto zablokowane po nieudanych próbach</option>
+            <option value="LOGOUT">Wylogowanie</option>
+            <option value="REGISTER">Rejestracja konta</option>
+            <option value="USER_LOCKED">Zablokowanie konta</option>
+            <option value="USER_UNLOCKED">Odblokowanie konta</option>
+            <option value="ROLE_CHANGED">Zmiana roli</option>
+            <option value="ACCOUNT_DELETED">Usunięcie konta</option>
+            <option value="PASSWORD_CHANGED">Zmiana hasła</option>
+          </select>
+          <span style="position:absolute;right:12px;pointer-events:none;color:var(--muted);">▾</span>
+        </div>
+      </div>
       <div class="users-table-wrap">
         <table class="users-table">
           <thead>
@@ -1201,7 +1236,7 @@
           </thead>
           <tbody>
             ${logs.map(l => `
-              <tr>
+              <tr data-event="${l.eventType}">
                 <td>${new Date(l.timestamp).toLocaleString('pl-PL')}</td>
                 <td>${eventLabels[l.eventType] || l.eventType}</td>
                 <td>${esc(l.performedBy || '—')}</td>
@@ -1256,6 +1291,20 @@
     } catch(e) {
       tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--red);padding:40px">Błąd połączenia</td></tr>`;
     }
+    filterUsers();
+  }
+
+  function filterUsers() {
+    const q = (document.getElementById('users-search')?.value || '').toLowerCase();
+    const role = document.getElementById('users-role-filter')?.value || '';
+    const rows = document.querySelectorAll('#users-tbody tr');
+    rows.forEach(row => {
+      const login = row.cells?.[0]?.textContent?.toLowerCase() || '';
+      const rowRole = row.cells?.[1]?.textContent || '';
+      const matchLogin = login.includes(q);
+      const matchRole = role === '' || (role === 'ADMIN' && rowRole === 'Administrator') || (role === 'USER' && rowRole === 'Użytkownik');
+      row.style.display = matchLogin && matchRole ? '' : 'none';
+    });
   }
 
   let roleUsername = null;
@@ -1615,6 +1664,20 @@
       sessionStorage.setItem('loggedOutByRefresh', 'true');
     }
   });
+
+  function filterLogs() {
+    const q = (document.getElementById('logs-search')?.value || '').toLowerCase();
+    const event = document.getElementById('logs-event-filter')?.value || '';
+    const rows = document.querySelectorAll('#panel-logs .users-table tbody tr');
+    rows.forEach(row => {
+      const performer = row.cells?.[2]?.textContent?.toLowerCase() || '';
+      const target = row.cells?.[3]?.textContent?.toLowerCase() || '';
+      const eventType = row.getAttribute('data-event') || '';
+      const matchSearch = performer.includes(q) || target.includes(q);
+      const matchEvent = event === '' || eventType === event;
+      row.style.display = matchSearch && matchEvent ? '' : 'none';
+    });
+  }
 
   // ============================================================
   //  UTILS
