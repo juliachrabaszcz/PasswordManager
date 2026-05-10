@@ -245,7 +245,7 @@
     .tab-panel { display: none; }
     .tab-panel.active { display: block; width: 100%; }
 
-      /* ===== VAULT TAB ===== */
+    /* ===== VAULT TAB ===== */
     .vault-toolbar {
       display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: nowrap;
       justify-content: center;
@@ -410,6 +410,7 @@
   <div class="logo">🔐 vault</div>
   <div id="user-bar">
     Zalogowano jako: <span id="username-display"></span>
+    <span id="session-timer" style="font-size:0.8rem;color:var(--muted)"></span>
     <span id="save-status" class="save-indicator"></span>
     <button id="logout-btn">Wyloguj</button>
   </div>
@@ -444,6 +445,7 @@
       <div class="field">
         <label>Hasło*</label>
         <input type="password" id="r-pass" placeholder="Min. 8 znaków" autocomplete="new-password" oninput="checkStrength(this.value)">
+        <div style="font-size:0.75rem;color:var(--muted);margin-top:6px">Musi zawierać co najmniej jedną wielką literę, cyfrę i znak specjalny.</div>
         <div class="strength-wrap">
           <div class="strength-bar"><div class="strength-fill" id="str-fill"></div></div>
           <div class="strength-label" id="str-label"></div>
@@ -504,8 +506,8 @@
           <span class="account-info-value" id="acc-last-login">—</span>
         </div>
         <div style="display:flex; gap:10px; margin-top:24px;">
-          <button class="btn secondary" style="margin-top:0" onclick="">Zmień hasło</button>
-          <button class="btn danger" style="margin-top:0" onclick="">Usuń konto</button>
+          <button class="btn secondary" style="margin-top:0" onclick="openChangePasswordModal()">Zmień hasło</button>
+          <button class="btn danger" style="margin-top:0" onclick="deleteUser(currentUser)">Usuń konto</button>
         </div>
       </div>
     </div>
@@ -576,6 +578,101 @@
   </div>
 </div>
 
+<!-- Zmiana hasła -->
+<div class="modal-backdrop" id="change-password-modal">
+  <div class="modal">
+    <h3>Zmiana hasła</h3>
+    <div class="field">
+      <label>Obecne hasło*</label>
+      <input type="password" id="cp-old" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <div class="field">
+      <label>Nowe hasło*</label>
+      <input type="password" id="cp-new" placeholder="Min. 8 znaków" autocomplete="new-password" oninput="checkStrengthCp(this.value)">
+      <div style="font-size:0.75rem;color:var(--muted);margin-top:6px">Musi zawierać co najmniej jedną wielką literę, cyfrę i znak specjalny.</div>
+      <div class="strength-wrap">
+        <div class="strength-bar"><div class="strength-fill" id="cp-str-fill"></div></div>
+        <div class="strength-label" id="cp-str-label"></div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Powtórz nowe hasło*</label>
+      <input type="password" id="cp-new2" placeholder="••••••••" autocomplete="new-password">
+    </div>
+    <div class="msg" id="cp-msg" style="margin-bottom:16px"></div>
+    <div style="display:flex;gap:10px;margin-top:4px">
+      <button class="btn" onclick="confirmChangePassword()">Zmień hasło</button>
+      <button class="btn secondary" onclick="closeChangePasswordModal()">Anuluj</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Błąd Admin123 zmiana hasła -->
+<div class="modal-backdrop" id="cp-admin-error">
+  <div class="modal">
+    <h3>Błąd</h3>
+    <p style="color:var(--muted);margin-bottom:20px">Nie można modyfikować konta <strong>Admin123</strong>.</p>
+    <div style="display:flex;gap:10px">
+      <button class="btn secondary" onclick="document.getElementById('cp-admin-error').classList.remove('open')">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- Usuń użytkownika -->
+<div class="modal-backdrop" id="delete-user-modal">
+  <div class="modal">
+    <h3 id="delete-user-modal-title">Usuń konto</h3>
+    <p style="color:var(--muted);margin-bottom:20px" id="delete-user-modal-msg"></p>
+    <div class="msg" id="delete-user-modal-result" style="margin-bottom:16px"></div>
+    <div id="delete-user-modal-btns" style="display:flex;gap:10px"></div>
+  </div>
+</div>
+
+<!--  Zmiana roli -->
+<div class="modal-backdrop" id="role-modal">
+  <div class="modal">
+    <h3 id="role-modal-title">Zmień uprawnienia</h3>
+    <p style="color:var(--muted);margin-bottom:20px" id="role-modal-msg"></p>
+    <div class="msg" id="role-modal-result" style="margin-bottom:16px"></div>
+    <div id="role-modal-btns" style="display:flex;gap:10px"></div>
+  </div>
+</div>
+
+<!-- MODAL: Blokada użytkownika -->
+<div class="modal-backdrop" id="lock-modal">
+  <div class="modal">
+    <h3 id="lock-modal-title">Zablokuj użytkownika</h3>
+    <p style="color:var(--muted);margin-bottom:20px" id="lock-modal-msg">Czy na pewno chcesz zablokować użytkownika <strong id="lock-modal-username"></strong>?</p>
+    <div class="msg" id="lock-modal-result" style="margin-bottom:16px"></div>
+    <div id="lock-modal-btns" style="display:flex;gap:10px">
+      <button class="btn" onclick="confirmToggleLock()">Tak</button>
+      <button class="btn secondary" onclick="closeLockModal()">Nie</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Auto-logout -->
+<div class="modal-backdrop" id="autologout-modal">
+  <div class="modal">
+    <h3>Sesja wygasła</h3>
+    <p style="color:var(--muted);margin-bottom:20px">Zostałeś automatycznie wylogowany z powodu 5 minut nieaktywności.</p>
+    <div style="display:flex;gap:10px">
+      <button class="btn secondary" onclick="document.getElementById('autologout-modal').classList.remove('open')">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Wylogowanie przez odświeżenie -->
+<div class="modal-backdrop" id="refresh-logout-modal">
+  <div class="modal">
+    <h3>Wylogowano</h3>
+    <p style="color:var(--muted);margin-bottom:20px">Wylogowano Cię z powodu odświeżenia strony.</p>
+    <div style="display:flex;gap:10px">
+      <button class="btn secondary" onclick="document.getElementById('refresh-logout-modal').classList.remove('open')">OK</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: Usuń hasło -->
 <div class="modal-backdrop" id="delete-modal">
   <div class="modal">
@@ -589,6 +686,11 @@
 </div>
 
 <script>
+  if (sessionStorage.getItem('loggedOutByRefresh')) {
+    sessionStorage.removeItem('loggedOutByRefresh');
+    document.getElementById('refresh-logout-modal').classList.add('open');
+  }
+
   // ============================================================
   //  KRYPTOGRAFIA
   // ============================================================
@@ -674,6 +776,7 @@
       if (btn.getAttribute('onclick') === `showPanel('${name}')`) btn.classList.add('active');
     });
     if (name === 'users') renderUsers();
+    if (name === 'logs') renderLogs();
   }
 
   // ============================================================
@@ -686,6 +789,12 @@
     document.getElementById('l-msg').textContent = '';
     document.getElementById('r-msg').className = 'msg';
     document.getElementById('r-msg').textContent = '';
+    document.getElementById('l-user').value = '';
+    document.getElementById('l-pass').value = '';
+    document.getElementById('r-user').value = '';
+    document.getElementById('r-pass').value = '';
+    document.getElementById('r-pass2').value = '';
+    checkStrength('');
     document.querySelectorAll('.tab').forEach((t, i) => {
       t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register'));
     });
@@ -756,7 +865,9 @@
     }
   }
 
-  document.getElementById('logout-btn').onclick = () => {
+  async function doLogout(auto = false) {
+    stopInactivityWatcher();
+    await fetch('/api/users/logout', { method: 'POST', credentials: 'include' });
     currentKey = null;
     currentUser = null;
     currentRole = null;
@@ -778,7 +889,12 @@
     document.getElementById('r-msg').textContent = '';
 
     showPanel('vault');
-  };
+    if (auto) {
+      document.getElementById('autologout-modal').classList.add('open');
+    }
+  }
+
+  document.getElementById('logout-btn').onclick = () => doLogout();
 
   // ============================================================
   //  SHOW APP
@@ -803,6 +919,7 @@
     document.getElementById('acc-last-login').textContent = currentLastLogin ? new Date(currentLastLogin).toLocaleString('pl-PL') : '—';
 
     renderEntries();
+    startInactivityWatcher();
   }
 
   // ============================================================
@@ -1038,11 +1155,466 @@
     label.style.color = LEVELS[s].color;
   }
 
-  function renderUsers() {
+  async function renderLogs() {
+    const panel = document.getElementById('panel-logs');
+    panel.innerHTML = '<p class="panel-title">Dziennik zdarzeń</p><div class="coming-soon">Ładowanie...</div>';
+
+    try {
+      const res = await fetch('/api/logs', { credentials: 'include' });
+      const logs = await res.json();
+
+      if (!res.ok) {
+        panel.innerHTML = `<p class="panel-title">Dziennik zdarzeń</p><div class="coming-soon">Błąd: ${logs.error}</div>`;
+        return;
+      }
+
+      if (logs.length === 0) {
+        panel.innerHTML = '<p class="panel-title">Dziennik zdarzeń</p><div class="coming-soon">Brak zdarzeń</div>';
+        return;
+      }
+
+      const eventLabels = {
+        'LOGIN_SUCCESS': '✅ Udane logowanie',
+        'LOGIN_FAILED': '⚠️ Nieudana próba logowania',
+        'LOGIN_FAILED_LOCKED': '🔒 Konto zablokowane po nieudanych próbach',
+        'LOGOUT': '🚪 Wylogowanie',
+        'REGISTER': '🆕 Rejestracja konta',
+        'USER_LOCKED': '🔒 Zablokowanie konta',
+        'USER_UNLOCKED': '🔓 Odblokowanie konta',
+        'ROLE_CHANGED': '👑 Zmiana roli',
+        'ACCOUNT_DELETED': '🗑 Usunięcie konta',
+        'PASSWORD_CHANGED': '🔑 Zmiana hasła'
+      };
+
+      panel.innerHTML = `
+      <p class="panel-title">Dziennik zdarzeń</p>
+      <div class="users-table-wrap">
+        <table class="users-table">
+          <thead>
+            <tr>
+              <th>Data i czas</th>
+              <th>Zdarzenie</th>
+              <th>Wykonał</th>
+              <th>Dotyczy</th>
+              <th>Szczegóły</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${logs.map(l => `
+              <tr>
+                <td>${new Date(l.timestamp).toLocaleString('pl-PL')}</td>
+                <td>${eventLabels[l.eventType] || l.eventType}</td>
+                <td>${esc(l.performedBy || '—')}</td>
+                <td>${esc(l.targetUser || '—')}</td>
+                <td style="color:var(--muted);font-size:0.85rem">${esc(l.details || '—')}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+    } catch(e) {
+      panel.innerHTML = '<p class="panel-title">Dziennik zdarzeń</p><div class="coming-soon">Błąd połączenia</div>';
+    }
+  }
+
+  async function renderUsers() {
     const tbody = document.getElementById('users-tbody');
     if (!tbody) return;
-    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:40px">Wkrótce dostępne</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:40px">Ładowanie...</td></tr>`;
+
+    try {
+      const res = await fetch('/api/users/all', { credentials: 'include' });
+      const users = await res.json();
+      allUsers = users;
+
+      if (!res.ok) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--red);padding:40px">Błąd: ${users.error}</td></tr>`;
+        return;
+      }
+
+      if (users.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:40px">Brak użytkowników</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = users.map(u => `
+      <tr>
+        <td>${esc(u.username)}</td>
+        <td>${u.role === 'ADMIN' ? 'Administrator' : 'Użytkownik'}</td>
+        <td>${u.createdAt ? new Date(u.createdAt).toLocaleString('pl-PL') : '—'}</td>
+        <td>${u.lastLogin ? new Date(u.lastLogin).toLocaleString('pl-PL') : '—'}</td>
+        <td>
+          <div class="user-actions">
+            <button class="icon-btn" title="Zmień uprawnienia" onclick="changeRole('${esc(u.username)}', '${u.role}', ${u.manuallyLocked})">👑</button>
+            <button class="icon-btn ${u.manuallyLocked ? 'active-lock' : ''}" title="${u.manuallyLocked ? 'Odblokuj' : 'Zablokuj'}" onclick="toggleLock('${esc(u.username)}', ${u.manuallyLocked}, '${u.role}')">${u.manuallyLocked ? '🔓' : '🔒'}</button>
+            <button class="icon-btn del" title="Usuń konto" onclick="deleteUser('${esc(u.username)}')">🗑</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+    } catch(e) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--red);padding:40px">Błąd połączenia</td></tr>`;
+    }
   }
+
+  let roleUsername = null;
+  let roleCurrentRole = null;
+
+  function changeRole(username, currentRole, isLocked) {
+    roleUsername = username;
+    roleCurrentRole = currentRole;
+    const title = document.getElementById('role-modal-title');
+    const msg = document.getElementById('role-modal-msg');
+    const btns = document.getElementById('role-modal-btns');
+    const result = document.getElementById('role-modal-result');
+    result.className = 'msg';
+    result.textContent = '';
+
+    if (username === 'Admin123') {
+      title.textContent = 'Błąd';
+      msg.innerHTML = 'Nie można modyfikować konta <strong>Admin123</strong>.';
+      btns.innerHTML = '<button class="btn secondary" onclick="closeRoleModal()">OK</button>';
+      btns.style.display = 'flex';
+    } else if (username === currentUser) {
+      title.textContent = 'Błąd';
+      msg.innerHTML = 'Nie możesz zmienić własnej roli.';
+      btns.innerHTML = '<button class="btn secondary" onclick="closeRoleModal()">OK</button>';
+    } else if (isLocked) {
+      title.textContent = 'Błąd';
+      msg.innerHTML = 'Nie można zmienić uprawnień zablokowanemu użytkownikowi. Najpierw odblokuj konto.';
+      btns.innerHTML = '<button class="btn secondary" onclick="closeRoleModal()">OK</button>';
+      btns.style.display = 'flex';
+    } else {
+      const newRole = currentRole === 'ADMIN' ? 'Użytkownik' : 'Administrator';
+      title.textContent = 'Zmień uprawnienia';
+      msg.innerHTML = `Czy na pewno chcesz zmienić rolę użytkownika <strong>${esc(username)}</strong> na <strong>${newRole}</strong>?`;
+      btns.innerHTML = '<button class="btn" onclick="confirmChangeRole()">Tak</button><button class="btn secondary" onclick="closeRoleModal()">Nie</button>';
+      btns.style.display = 'flex';
+    }
+
+    document.getElementById('role-modal').classList.add('open');
+  }
+
+  function closeRoleModal() {
+    roleUsername = null;
+    document.getElementById('role-modal').classList.remove('open');
+  }
+
+  async function confirmChangeRole() {
+    const result = document.getElementById('role-modal-result');
+    const title = document.getElementById('role-modal-title');
+    const msg = document.getElementById('role-modal-msg');
+    const btns = document.getElementById('role-modal-btns');
+    try {
+      const res = await fetch(`/api/users/${roleUsername}/role`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+      const data = await res.json();
+      if (res.ok) {
+        const newRole = data.role === 'ADMIN' ? 'Administrator' : 'Użytkownik';
+        title.textContent = 'Zmieniono rolę';
+        msg.innerHTML = `Zmieniono rolę użytkownika <strong>${roleUsername}</strong> na <strong>${newRole}</strong>.`;
+        btns.style.display = 'none';
+        result.className = 'msg';
+        result.textContent = '';
+        renderUsers();
+        setTimeout(() => closeRoleModal(), 2000);
+      } else {
+        result.className = 'msg err';
+        result.textContent = data.error || 'Błąd';
+      }
+    } catch(e) {
+      result.className = 'msg err';
+      result.textContent = 'Błąd połączenia';
+    }
+  }
+
+  let lockingUsername = null;
+  let lockingIsLocked = false;
+
+  function toggleLock(username, isLocked, role) {
+    const isAdmin = role === 'ADMIN';
+    if (username === currentUser) {
+      openLockModal(username, isLocked, true, isAdmin);
+      return;
+    }
+    openLockModal(username, isLocked, false, isAdmin);
+  }
+
+  function openLockModal(username, isLocked, isSelf, isAdmin) {
+    lockingUsername = username;
+    lockingIsLocked = isLocked;
+    const title = document.getElementById('lock-modal-title');
+    const msg = document.getElementById('lock-modal-msg');
+    const result = document.getElementById('lock-modal-result');
+    const btns = document.getElementById('lock-modal-btns');
+    result.className = 'msg';
+    result.textContent = '';
+
+    if (isSelf) {
+      title.textContent = 'Błąd';
+      msg.innerHTML = 'Nie możesz zablokować własnego konta.';
+      btns.innerHTML = '<button class="btn secondary" onclick="closeLockModal()">OK</button>';
+      btns.style.display = 'flex';
+    } else if (isAdmin && !isLocked) {
+      title.textContent = 'Błąd';
+      msg.innerHTML = 'Nie można zablokować konta z uprawnieniami administratora.';
+      btns.innerHTML = '<button class="btn secondary" onclick="closeLockModal()">OK</button>';
+      btns.style.display = 'flex';
+    } else {
+      title.textContent = isLocked ? 'Odblokuj użytkownika' : 'Zablokuj użytkownika';
+      msg.innerHTML = `Czy na pewno chcesz ${isLocked ? 'odblokować' : 'zablokować'} użytkownika <strong>${esc(username)}</strong>?`;
+      btns.innerHTML = '<button class="btn" onclick="confirmToggleLock()">Tak</button><button class="btn secondary" onclick="closeLockModal()">Nie</button>';
+      btns.style.display = 'flex';
+    }
+
+    document.getElementById('lock-modal').classList.add('open');
+  }
+
+  function closeLockModal() {
+    lockingUsername = null;
+    document.getElementById('lock-modal').classList.remove('open');
+  }
+
+  async function confirmToggleLock() {
+    const result = document.getElementById('lock-modal-result');
+    const btns = document.getElementById('lock-modal-btns');
+    try {
+      const res = await fetch(`/api/users/${lockingUsername}/lock`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+      const data = await res.json();
+      if (res.ok) {
+        const nowLocked = data.manuallyLocked;
+        const title = document.getElementById('lock-modal-title');
+        const msg = document.getElementById('lock-modal-msg');
+        title.textContent = nowLocked ? 'Zablokowano' : 'Odblokowano';
+        msg.innerHTML = nowLocked ? `Zablokowano użytkownika <strong>${lockingUsername}</strong>.` : `Odblokowano użytkownika <strong>${lockingUsername}</strong>.`;
+        result.className = 'msg';
+        result.textContent = '';
+        btns.style.display = 'none';
+        renderUsers();
+        setTimeout(() => closeLockModal(), 2000);
+      } else {
+        result.className = 'msg err';
+        result.textContent = data.error || 'Błąd';
+      }
+    } catch(e) {
+      result.className = 'msg err';
+      result.textContent = 'Błąd połączenia';
+    }
+  }
+
+  let deletingUsername = null;
+  let allUsers = [];
+
+  function deleteUser(username) {
+    deletingUsername = username;
+    const title = document.getElementById('delete-user-modal-title');
+    const msg = document.getElementById('delete-user-modal-msg');
+    const btns = document.getElementById('delete-user-modal-btns');
+    const result = document.getElementById('delete-user-modal-result');
+    result.className = 'msg';
+    result.textContent = '';
+
+    if (username === 'Admin123') {
+      title.textContent = 'Błąd';
+      msg.innerHTML = 'Nie można usunąć konta <strong>Admin123</strong>.';
+      btns.innerHTML = '<button class="btn secondary" onclick="closeDeleteUserModal()">OK</button>';
+      btns.style.display = 'flex';
+    } else if (username !== currentUser && allUsers.find(u => u.username === username)?.role === 'ADMIN') {
+      title.textContent = 'Błąd';
+      msg.innerHTML = 'Nie można usunąć konta z uprawnieniami administratora.';
+      btns.innerHTML = '<button class="btn secondary" onclick="closeDeleteUserModal()">OK</button>';
+      btns.style.display = 'flex';
+    } else {
+      title.textContent = 'Usuń konto';
+      msg.innerHTML = `Czy na pewno chcesz usunąć konto <strong>${esc(username)}</strong>? Tej operacji nie można cofnąć.`;
+      btns.innerHTML = '<button class="btn danger" onclick="confirmDeleteUser()">Usuń</button><button class="btn secondary" onclick="closeDeleteUserModal()">Anuluj</button>';
+      btns.style.display = 'flex';
+    }
+
+    document.getElementById('delete-user-modal').classList.add('open');
+  }
+
+  function closeDeleteUserModal() {
+    deletingUsername = null;
+    document.getElementById('delete-user-modal').classList.remove('open');
+  }
+
+  async function confirmDeleteUser() {
+    const title = document.getElementById('delete-user-modal-title');
+    const msg = document.getElementById('delete-user-modal-msg');
+    const btns = document.getElementById('delete-user-modal-btns');
+    const result = document.getElementById('delete-user-modal-result');
+    try {
+      const res = await fetch(`/api/users/${deletingUsername}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      const data = await res.json();
+      if (res.ok) {
+        title.textContent = 'Usunięto';
+        msg.innerHTML = `Konto <strong>${deletingUsername}</strong> zostało usunięte.`;
+        btns.style.display = 'none';
+        result.className = 'msg';
+        result.textContent = '';
+        if (deletingUsername === currentUser) {
+          setTimeout(() => {
+            closeDeleteUserModal();
+            doLogout();
+          }, 2000);
+        } else {
+          renderUsers();
+          setTimeout(() => closeDeleteUserModal(), 2000);
+        }
+      } else {
+        result.className = 'msg err';
+        result.textContent = data.error || 'Błąd';
+      }
+    } catch(e) {
+      result.className = 'msg err';
+      result.textContent = 'Błąd połączenia';
+    }
+  }
+
+  function openChangePasswordModal() {
+    if (currentUser === 'Admin123') {
+      document.getElementById('cp-admin-error').classList.add('open');
+      return;
+    } else {
+
+      document.getElementById('cp-old').value = '';
+      document.getElementById('cp-new').value = '';
+      document.getElementById('cp-new2').value = '';
+      document.getElementById('cp-str-fill').style.width = '0';
+      document.getElementById('cp-str-label').textContent = '';
+      document.getElementById('cp-msg').className = 'msg';
+      document.getElementById('cp-msg').textContent = '';
+      document.getElementById('change-password-modal').classList.add('open');
+    }
+  }
+
+  function closeChangePasswordModal() {
+    document.getElementById('change-password-modal').classList.remove('open');
+  }
+
+  function checkStrengthCp(pass) {
+    const s = pass ? strengthScore(pass) : 0;
+    const fill = document.getElementById('cp-str-fill');
+    const label = document.getElementById('cp-str-label');
+    fill.style.width = (s * 20) + '%';
+    fill.style.background = LEVELS[s].color;
+    label.textContent = LEVELS[s].label;
+    label.style.color = LEVELS[s].color;
+  }
+
+  async function confirmChangePassword() {
+    const oldPassword = document.getElementById('cp-old').value;
+    const newPassword = document.getElementById('cp-new').value;
+    const newPassword2 = document.getElementById('cp-new2').value;
+    const msg = document.getElementById('cp-msg');
+
+    if (!oldPassword || !newPassword || !newPassword2)
+      return showMsg(msg, 'err', 'Wypełnij wszystkie pola');
+
+    if (newPassword !== newPassword2)
+      return showMsg(msg, 'err', 'Nowe hasła się nie zgadzają');
+
+    if (newPassword.length < 8)
+      return showMsg(msg, 'err', 'Hasło musi mieć min. 8 znaków');
+
+    if (!/[A-Z]/.test(newPassword)) return showMsg(msg, 'err', 'Hasło musi zawierać co najmniej jedną wielką literę');
+    if (!/[0-9]/.test(newPassword)) return showMsg(msg, 'err', 'Hasło musi zawierać co najmniej jedną cyfrę');
+    if (!/[^a-zA-Z0-9]/.test(newPassword)) return showMsg(msg, 'err', 'Hasło musi zawierać co najmniej jeden znak specjalny');
+    if (oldPassword === newPassword) return showMsg(msg, 'err', 'Nowe hasło nie może być takie samo jak obecne');
+
+    try {
+      const res = await fetch('/api/users/change-password', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        credentials: 'include',
+        body: JSON.stringify({ oldPassword, newPassword })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showMsg(msg, 'ok', 'Hasło zostało zmienione. Za chwilę zostaniesz wylogowany.');
+        setTimeout(() => {
+          closeChangePasswordModal();
+          doLogout();
+        }, 2000);
+      } else {
+        showMsg(msg, 'err', data.error || 'Błąd');
+      }
+    } catch(e) {
+      showMsg(msg, 'err', 'Błąd połączenia');
+    }
+  }
+
+  // ============================================================
+  //  AUTO-LOGOUT po 5 minutach nieaktywności
+  // ============================================================
+  let inactivityTimer = null;
+
+  function resetInactivityTimer() {
+    clearTimeout(inactivityTimer);
+    clearInterval(sessionTimerInterval);
+    sessionSecondsLeft = 5 * 60;
+    userActive = true;
+    updateSessionTimerDisplay();
+
+    sessionTimerInterval = setInterval(() => {
+      userActive = false;
+      sessionSecondsLeft -= 60;
+      if (sessionSecondsLeft <= 0) sessionSecondsLeft = 0;
+      updateSessionTimerDisplay();
+    }, 60 * 1000);
+
+    inactivityTimer = setTimeout(() => {
+      if (currentUser) {
+        doLogout(true);
+      }
+    }, 5 * 60 * 1000);
+  }
+
+  function startInactivityWatcher() {
+    ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'].forEach(event => {
+      document.addEventListener(event, resetInactivityTimer);
+    });
+    resetInactivityTimer();
+  }
+
+  let sessionTimerInterval = null;
+  let sessionSecondsLeft = 5 * 60;
+  let userActive = true;
+
+  function updateSessionTimerDisplay() {
+    const el = document.getElementById('session-timer');
+    if (!el) return;
+    if (userActive) {
+      el.textContent = '';
+      return;
+    }
+    const minutes = Math.ceil(sessionSecondsLeft / 60);
+    el.textContent = `· Wylogowanie za ${minutes} min`;
+  }
+
+  function stopInactivityWatcher() {
+    clearTimeout(inactivityTimer);
+    clearInterval(sessionTimerInterval);
+    const el = document.getElementById('session-timer');
+    if (el) el.textContent = '';
+  }
+
+  window.addEventListener('beforeunload', () => {
+    if (currentUser) {
+      navigator.sendBeacon('/api/users/logout');
+      sessionStorage.setItem('loggedOutByRefresh', 'true');
+    }
+  });
 
   // ============================================================
   //  UTILS
