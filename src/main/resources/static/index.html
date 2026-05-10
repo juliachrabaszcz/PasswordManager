@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="pl" xmlns:max-width="http://www.w3.org/1999/xhtml">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -22,6 +22,9 @@
       --text: #e2e8f0;
       --muted: #64748b;
       --radius: 12px;
+      --sidebar-width: 220px;
+      --sidebar-collapsed: 0px;
+      --header-height: 56px;
     }
 
     body {
@@ -29,26 +32,82 @@
       color: var(--text);
       font-family: 'DM Sans', sans-serif;
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 40px 16px;
     }
 
-    /* ---- HEADER ---- */
+    /* ===== HEADER ===== */
     header {
-      width: 100%;
-      max-width: 780px;
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: var(--header-height);
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      margin-bottom: 40px;
+      padding: 0 20px;
+      gap: 16px;
+      z-index: 200;
     }
-    .logo { font-family: 'DM Mono', monospace; font-size: 1.2rem; color: var(--accent); letter-spacing: -1px; }
-    #user-bar { font-size: 0.85rem; color: var(--muted); display: flex; align-items: center; gap: 12px; }
+
+    #hamburger {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 6px;
+      font-size: 1.1rem;
+      line-height: 1;
+      transition: color .2s, background .2s;
+      display: none;
+    }
+    #hamburger:hover { color: var(--text); background: var(--surface2); }
+
+    .logo {
+      font-family: 'DM Mono', monospace;
+      font-size: 1.1rem;
+      color: var(--accent);
+      letter-spacing: -1px;
+    }
+
+    #user-bar {
+      margin-left: auto;
+      font-size: 0.85rem;
+      color: var(--muted);
+      display: none;
+      align-items: center;
+      gap: 12px;
+    }
     #user-bar span { color: var(--accent2); font-weight: 500; }
 
-    /* ---- CARD ---- */
+    #logout-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem;
+      padding: 5px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    #logout-btn:hover { color: var(--text); border-color: var(--muted); }
+
+    .save-indicator { font-size: 0.8rem; color: var(--muted); }
+    .save-indicator.saving { color: var(--yellow); }
+    .save-indicator.saved { color: var(--green); }
+
+    /* ===== AUTH SECTION ===== */
+    #auth-section {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      padding: 16px;
+      padding-top: calc(var(--header-height) + 16px);
+      width: 100%;
+    }
+
     .card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -57,11 +116,17 @@
       width: 100%;
       max-width: 440px;
       overflow: hidden;
+      margin: 0 auto;
     }
-    .card h2 { font-size: 1.3rem; font-weight: 600; margin-bottom: 24px; }
 
-    /* ---- TABS ---- */
-    .tabs { display: flex; gap: 4px; margin-bottom: 28px; background: var(--surface2); padding: 4px; border-radius: 8px; }
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 28px;
+      background: var(--surface2);
+      padding: 4px;
+      border-radius: 8px;
+    }
     .tab {
       flex: 1; padding: 8px; border: none; border-radius: 6px;
       background: transparent; color: var(--muted); font-size: 0.9rem;
@@ -69,9 +134,11 @@
     }
     .tab.active { background: var(--surface); color: var(--text); font-weight: 500; }
 
-    /* ---- FORM ---- */
     .field { margin-bottom: 16px; }
-    label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 6px; letter-spacing: .5px; text-transform: uppercase; }
+    label {
+      display: block; font-size: 0.8rem; color: var(--muted);
+      margin-bottom: 6px; letter-spacing: .5px; text-transform: uppercase;
+    }
     input[type=text], input[type=password] {
       width: 100%; padding: 10px 14px;
       background: var(--surface2); border: 1px solid var(--border);
@@ -80,13 +147,11 @@
     }
     input:focus { border-color: var(--accent); }
 
-    /* ---- STRENGTH BAR ---- */
     .strength-wrap { margin-top: 8px; }
     .strength-bar { height: 4px; border-radius: 2px; background: var(--surface2); overflow: hidden; }
     .strength-fill { height: 100%; width: 0; border-radius: 2px; transition: width .3s, background .3s; }
     .strength-label { font-size: 0.75rem; margin-top: 4px; }
 
-    /* ---- BUTTON ---- */
     .btn {
       width: 100%; padding: 11px; border: none; border-radius: 8px;
       background: var(--accent); color: #fff; font-family: 'DM Sans', sans-serif;
@@ -97,26 +162,103 @@
     .btn.secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
     .btn.danger { background: transparent; color: var(--red); border: 1px solid var(--red); }
 
-    /* ---- MESSAGE ---- */
-    .msg { font-size: 0.85rem; margin-top: 16px; padding: 8px 14px; border-radius: 8px; display: none; white-space: pre-line; word-break: break-word; max-width: 100%; text-align: center; }
+    .msg {
+      font-size: 0.85rem; margin-top: 16px; padding: 8px 14px;
+      border-radius: 8px; display: none; white-space: pre-line;
+      word-break: break-word; max-width: 100%; text-align: center;
+    }
     .msg.ok { background: #14372a; color: var(--green); display: block; }
     .msg.err { background: #2d1515; color: var(--red); display: block; }
 
-    /* ---- VAULT SECTION ---- */
-    #vault-section { width: 100%; max-width: 780px; display: none; }
-    #vault-section h2 { font-size: 1.3rem; font-weight: 600; margin-bottom: 20px; }
+    /* ===== APP LAYOUT (sidebar + content) ===== */
+    #app-layout {
+      display: none;
+      padding-top: var(--header-height);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
 
-    .vault-toolbar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+    /* ===== SIDEBAR ===== */
+    #sidebar {
+      position: fixed;
+      top: var(--header-height);
+      left: 0;
+      bottom: 0;
+      width: var(--sidebar-width);
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      transition: transform .25s ease;
+      z-index: 150;
+      overflow: hidden;
+    }
+
+    #sidebar.collapsed {
+      transform: translateX(calc(-1 * var(--sidebar-width)));
+    }
+
+    .sidebar-nav {
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .nav-item {
+      padding: 10px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: var(--muted);
+      transition: all .2s;
+      border: none;
+      background: none;
+      text-align: left;
+      font-family: 'DM Sans', sans-serif;
+      width: 100%;
+      white-space: normal;
+    }
+    .nav-item:hover { background: var(--surface2); color: var(--text); }
+    .nav-item.active { background: var(--surface2); color: var(--accent); font-weight: 500; }
+
+    .sidebar-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 8px 12px;
+    }
+
+    /* ===== MAIN CONTENT ===== */
+    #main-content {
+      margin-left: var(--sidebar-width);
+      padding: 32px;
+      transition: margin-left .25s ease, width .25s ease;
+      min-height: calc(100vh - var(--header-height));
+      box-sizing: border-box;
+    }
+
+    #main-content.expanded {
+      margin-left: 0;
+    }
+
+    /* ===== TAB PANELS ===== */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; width: 100%; }
+
+      /* ===== VAULT TAB ===== */
+    .vault-toolbar {
+      display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: nowrap;
+      justify-content: center;
+    }
     .vault-toolbar input {
-      flex: 1; min-width: 180px; padding: 9px 14px;
+      max-width: 500px; width: 100%; padding: 9px 14px;
       background: var(--surface); border: 1px solid var(--border);
       border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif;
       font-size: 0.9rem; outline: none;
     }
     .vault-toolbar input:focus { border-color: var(--accent); }
-    .vault-toolbar .btn { width: auto; padding: 9px 18px; margin-top: 0; }
+    .vault-toolbar .btn { width: auto; padding: 9px 18px; margin-top: 0; flex-shrink: 0; }
 
-    /* ---- ENTRIES ---- */
     .entries { display: flex; flex-direction: column; gap: 10px; }
     .entry {
       background: var(--surface); border: 1px solid var(--border);
@@ -138,44 +280,135 @@
     .icon-btn:hover { color: var(--text); border-color: var(--muted); }
     .icon-btn.del:hover { color: var(--red); border-color: var(--red); }
 
-    /* ---- ADD ENTRY MODAL ---- */
+    .empty-state { text-align: center; padding: 40px; color: var(--muted); font-size: 0.9rem; }
+
+    /* ===== ACCOUNT TAB ===== */
+    .account-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      max-width: 620px;
+      margin-bottom: 20px;
+      margin: 0 auto 20px auto;
+    }
+    .account-card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 20px; color: var(--text); }
+    .account-info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.9rem;
+    }
+    .account-info-row:last-child { border-bottom: none; }
+    .account-info-label { color: var(--muted); }
+    .account-info-value { font-family: 'DM Mono', monospace; color: var(--text); }
+
+    /* ===== ADMIN TAB ===== */
+    .panel-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 24px;
+      color: var(--text);
+    }
+    .coming-soon {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 40px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    /* ===== MODALS ===== */
     .modal-backdrop {
       display: none; position: fixed; inset: 0;
       background: rgba(0,0,0,.6); backdrop-filter: blur(4px);
-      justify-content: center; align-items: center; z-index: 100;
+      justify-content: center; align-items: center; z-index: 300;
     }
     .modal-backdrop.open { display: flex; }
-    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; width: 100%; max-width: 420px; }
+    .modal {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 28px; width: 100%; max-width: 420px;
+    }
     .modal h3 { margin-bottom: 20px; }
 
     .gen-row { display: flex; gap: 8px; align-items: flex-end; }
     .gen-row input { flex: 1; }
     .gen-row .btn { width: auto; margin-top: 0; padding: 10px 14px; font-size: 0.85rem; }
 
-    /* ---- LOGOUT ---- */
-    #logout-btn {
-      background: none; border: 1px solid var(--border); color: var(--muted);
-      font-family: 'DM Sans', sans-serif; font-size: 0.8rem; padding: 5px 12px;
-      border-radius: 6px; cursor: pointer; transition: all .2s;
-    }
-    #logout-btn:hover { color: var(--text); border-color: var(--muted); }
-
-    .empty-state { text-align: center; padding: 40px; color: var(--muted); font-size: 0.9rem; }
-    .save-indicator { font-size: 0.8rem; color: var(--muted); }
-    .save-indicator.saving { color: var(--yellow); }
-    .save-indicator.saved { color: var(--green); }
-
-    @media (max-width: 600px) {
+    @media (max-width: 768px) {
+      #hamburger { display: block; }
+      #sidebar { transform: translateX(calc(-1 * var(--sidebar-width))); }
+      #sidebar.open { transform: translateX(0); }
+      #main-content { margin-left: 0; }
       .entry { grid-template-columns: 1fr; }
       .entry-actions { justify-content: flex-end; }
+    }
+
+    /* ===== USERS TABLE ===== */
+    .users-table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .users-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    .users-table thead {
+      background: var(--surface2);
+    }
+
+    .users-table th {
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      color: var(--muted);
+      font-weight: 500;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .users-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+    }
+
+    .users-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .users-table tbody tr:hover {
+      background: var(--surface2);
+    }
+
+    .user-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    @media (min-width: 769px) {
+      #hamburger { display: block; }
     }
   </style>
 </head>
 <body>
 
+<!-- ===== HEADER ===== -->
 <header>
+  <button id="hamburger" onclick="toggleSidebar()">☰</button>
   <div class="logo">🔐 vault</div>
-  <div id="user-bar" style="display:none">
+  <div id="user-bar">
     Zalogowano jako: <span id="username-display"></span>
     <span id="save-status" class="save-indicator"></span>
     <button id="logout-btn">Wyloguj</button>
@@ -190,7 +423,6 @@
       <button class="tab" onclick="switchTab('register')">Rejestracja</button>
     </div>
 
-    <!-- LOGIN FORM -->
     <div id="login-form">
       <div class="field">
         <label>Login</label>
@@ -204,7 +436,6 @@
       <div class="msg" id="l-msg"></div>
     </div>
 
-    <!-- REGISTER FORM -->
     <div id="register-form" style="display:none">
       <div class="field">
         <label>Login*</label>
@@ -212,8 +443,7 @@
       </div>
       <div class="field">
         <label>Hasło*</label>
-        <input type="password" id="r-pass" placeholder="Min. 8 znaków" autocomplete="new-password"
-               oninput="checkStrength(this.value)">
+        <input type="password" id="r-pass" placeholder="Min. 8 znaków" autocomplete="new-password" oninput="checkStrength(this.value)">
         <div class="strength-wrap">
           <div class="strength-bar"><div class="strength-fill" id="str-fill"></div></div>
           <div class="strength-label" id="str-label"></div>
@@ -229,18 +459,88 @@
   </div>
 </div>
 
-<!-- ===== VAULT SECTION ===== -->
-<div id="vault-section">
-  <div class="vault-toolbar">
-    <input type="text" id="search-input" placeholder="🔍 Szukaj po nazwie lub loginie..." oninput="renderEntries()">
-    <button class="btn" onclick="openAddModal()">+ Dodaj hasło</button>
-  </div>
-  <div class="entries" id="entries-list">
-    <div class="empty-state">Brak zapisanych haseł. Kliknij „+ Dodaj hasło".</div>
-  </div>
+<!-- ===== APP LAYOUT ===== -->
+<div id="app-layout">
+
+  <!-- SIDEBAR -->
+  <nav id="sidebar" class="collapsed">
+    <div class="sidebar-nav" id="sidebar-nav">
+      <!-- wypełniane przez JS w zależności od roli -->
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main id="main-content" class="expanded">
+
+    <!-- ZAKŁADKA: Moje hasła -->
+    <div class="tab-panel active" id="panel-vault">
+      <div class="vault-toolbar">
+        <input type="text" id="search-input" placeholder="🔍 Szukaj po nazwie lub loginie..." oninput="renderEntries()">
+        <button class="btn" onclick="openAddModal()" style="width:auto; padding:9px 18px; margin-top:0; flex-shrink:0;">+ Dodaj hasło</button>
+      </div>
+      <div class="entries" id="entries-list">
+        <div class="empty-state">Brak zapisanych haseł. Kliknij „+ Dodaj hasło".</div>
+      </div>
+    </div>
+
+    <!-- ZAKŁADKA: Moje konto -->
+    <div class="tab-panel" id="panel-account">
+      <div class="account-card">
+        <h3>Informacje o koncie</h3>
+        <div class="account-info-row">
+          <span class="account-info-label">Login</span>
+          <span class="account-info-value" id="acc-username">—</span>
+        </div>
+        <div class="account-info-row">
+          <span class="account-info-label">Rola</span>
+          <span class="account-info-value" id="acc-role">—</span>
+        </div>
+        <div class="account-info-row">
+          <span class="account-info-label">Data założenia konta</span>
+          <span class="account-info-value" id="acc-created">—</span>
+        </div>
+        <div class="account-info-row">
+          <span class="account-info-label">Ostatnie logowanie</span>
+          <span class="account-info-value" id="acc-last-login">—</span>
+        </div>
+        <div style="display:flex; gap:10px; margin-top:24px;">
+          <button class="btn secondary" style="margin-top:0" onclick="">Zmień hasło</button>
+          <button class="btn danger" style="margin-top:0" onclick="">Usuń konto</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ZAKŁADKA: Zarządzanie użytkownikami (tylko admin) -->
+    <div class="tab-panel" id="panel-users">
+      <p class="panel-title">Zarządzanie użytkownikami</p>
+      <div class="users-table-wrap">
+        <table class="users-table">
+          <thead>
+          <tr>
+            <th>Login</th>
+            <th>Rola</th>
+            <th>Data rejestracji</th>
+            <th>Ostatnie logowanie</th>
+            <th>Akcje</th>
+          </tr>
+          </thead>
+          <tbody id="users-tbody">
+          <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:40px">Ładowanie...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ZAKŁADKA: Dziennik zdarzeń (tylko admin) -->
+    <div class="tab-panel" id="panel-logs">
+      <p class="panel-title">Dziennik zdarzeń</p>
+      <div class="coming-soon">Wkrótce dostępne</div>
+    </div>
+
+  </main>
 </div>
 
-<!-- ===== ADD/EDIT MODAL ===== -->
+<!-- MODAL: Dodaj/Edytuj hasło -->
 <div class="modal-backdrop" id="modal">
   <div class="modal">
     <h3 id="modal-title">Dodaj hasło</h3>
@@ -275,9 +575,22 @@
     </div>
   </div>
 </div>
+
+<!-- MODAL: Usuń hasło -->
+<div class="modal-backdrop" id="delete-modal">
+  <div class="modal">
+    <h3>Usuń wpis</h3>
+    <p style="color:var(--muted);margin-bottom:20px">Czy na pewno chcesz usunąć ten wpis? Tej operacji nie można cofnąć.</p>
+    <div style="display:flex;gap:10px">
+      <button class="btn danger" onclick="confirmDelete()">Usuń</button>
+      <button class="btn secondary" onclick="closeDeleteModal()">Anuluj</button>
+    </div>
+  </div>
+</div>
+
 <script>
   // ============================================================
-  //  KRYPTOGRAFIA (Web Crypto API)
+  //  KRYPTOGRAFIA
   // ============================================================
   async function deriveKey(password, salt) {
     const enc = new TextEncoder();
@@ -307,17 +620,64 @@
   }
 
   // ============================================================
-  //  STATE (Stan aplikacji)
+  //  STATE
   // ============================================================
   let currentUser = null;
-  let currentKey = null;   // KLUCZ AES W PAMIĘCI RAM
-  let vaultData = { entries: [] }; // Formatujemy jako obiekt, by łatwiej szyfrować
+  let currentRole = null;
+  let currentKey = null;
+  let vaultData = { entries: [] };
   let editingId = null;
   let saveTimeout = null;
   let deletingId = null;
+  let sidebarOpen = false;
+  let currentCreatedAt = null;
+  let currentLastLogin = null;
 
   // ============================================================
-  //  AUTH (Logowanie i Rejestracja)
+  //  SIDEBAR
+  // ============================================================
+  function toggleSidebar() {
+    sidebarOpen = !sidebarOpen;
+    const sidebar = document.getElementById('sidebar');
+    const content = document.getElementById('main-content');
+    if (sidebarOpen) {
+      sidebar.classList.remove('collapsed');
+      content.classList.remove('expanded');
+    } else {
+      sidebar.classList.add('collapsed');
+      content.classList.add('expanded');
+    }
+  }
+
+  function buildSidebar(role) {
+    const nav = document.getElementById('sidebar-nav');
+    const userItems = `
+      <button class="nav-item active" onclick="showPanel('vault')">Moje hasła</button>
+      <button class="nav-item" onclick="showPanel('account')">Moje konto</button>
+    `;
+    const adminItems = `
+      <button class="nav-item active" onclick="showPanel('vault')">Moje hasła</button>
+      <button class="nav-item" onclick="showPanel('account')">Moje konto</button>
+      <div class="sidebar-divider"></div>
+      <button class="nav-item" onclick="showPanel('users')">Zarządzanie użytkownikami</button>
+      <button class="nav-item" onclick="showPanel('logs')">Dziennik zdarzeń</button>
+    `;
+    nav.innerHTML = role === 'ADMIN' ? adminItems : userItems;
+  }
+
+  function showPanel(name) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('panel-' + name).classList.add('active');
+    const btns = document.querySelectorAll('#sidebar-nav .nav-item');
+    btns.forEach(btn => {
+      if (btn.getAttribute('onclick') === `showPanel('${name}')`) btn.classList.add('active');
+    });
+    if (name === 'users') renderUsers();
+  }
+
+  // ============================================================
+  //  AUTH
   // ============================================================
   function switchTab(tab) {
     document.getElementById('login-form').style.display = tab === 'login' ? '' : 'none';
@@ -352,11 +712,12 @@
 
       if (res.ok) {
         currentUser = username;
-        // 1. GENERUJEMY KLUCZ Z HASŁA GŁÓWNEGO
+        currentRole = data.role;
+        currentCreatedAt = data.createdAt;
+        currentLastLogin = data.lastLogin;
         currentKey = await deriveKey(password, data.salt);
-
         await loadVault();
-        showVault();
+        showApp();
       } else {
         msg.className = 'msg';
         msg.textContent = '';
@@ -396,21 +757,53 @@
   }
 
   document.getElementById('logout-btn').onclick = () => {
-    // CZYSZCZENIE PAMIĘCI RAM Z KLUCZA
     currentKey = null;
     currentUser = null;
+    currentRole = null;
+    currentCreatedAt = null;
+    currentLastLogin = null;
     vaultData = { entries: [] };
+    sidebarOpen = false;
 
-    document.getElementById('vault-section').style.display = 'none';
-    document.getElementById('auth-section').style.display = '';
+    document.getElementById('app-layout').style.display = 'none';
+    document.getElementById('auth-section').style.display = 'flex';
     document.getElementById('user-bar').style.display = 'none';
+    document.getElementById('sidebar').classList.add('collapsed');
+    document.getElementById('main-content').classList.add('expanded');
     document.getElementById('l-pass').value = '';
     document.getElementById('l-user').value = '';
     document.getElementById('l-msg').className = 'msg';
     document.getElementById('l-msg').textContent = '';
     document.getElementById('r-msg').className = 'msg';
     document.getElementById('r-msg').textContent = '';
+
+    showPanel('vault');
   };
+
+  // ============================================================
+  //  SHOW APP
+  // ============================================================
+  function showApp() {
+    document.getElementById('auth-section').style.display = 'none';
+    document.getElementById('app-layout').style.display = 'block';
+    document.getElementById('app-layout').style.width = '100%';
+    document.getElementById('auth-section').style.width = '';
+    document.getElementById('user-bar').style.display = 'flex';
+    document.getElementById('username-display').textContent = currentUser;
+    document.getElementById('l-msg').className = 'msg';
+    document.getElementById('l-msg').textContent = '';
+    document.getElementById('r-msg').className = 'msg';
+    document.getElementById('r-msg').textContent = '';
+
+    buildSidebar(currentRole);
+
+    document.getElementById('acc-username').textContent = currentUser;
+    document.getElementById('acc-role').textContent = currentRole === 'ADMIN' ? 'Administrator' : 'Użytkownik';
+    document.getElementById('acc-created').textContent = currentCreatedAt ? new Date(currentCreatedAt).toLocaleString('pl-PL') : '—';
+    document.getElementById('acc-last-login').textContent = currentLastLogin ? new Date(currentLastLogin).toLocaleString('pl-PL') : '—';
+
+    renderEntries();
+  }
 
   // ============================================================
   //  VAULT LOAD / SAVE
@@ -420,8 +813,6 @@
       const res = await fetch(`/api/vault/${currentUser}`, { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
-
-        // DESZYFROWANIE
         if (data.encryptedData) {
           const parsedBlob = JSON.parse(data.encryptedData);
           const decryptedStr = await decryptData(parsedBlob.ciphertext, parsedBlob.iv, currentKey);
@@ -447,11 +838,8 @@
 
   async function saveVault() {
     try {
-      // SZYFROWANIE CAŁEGO SEJFU
       const jsonStr = JSON.stringify(vaultData);
       const encrypted = await encryptData(jsonStr, currentKey);
-
-      // Pakujemy wektor (IV) i reszte w jednego stringa, żeby pasowało
       const blobToSave = JSON.stringify({ ciphertext: encrypted.ciphertext, iv: encrypted.iv });
 
       await fetch(`/api/vault/${currentUser}`, {
@@ -473,18 +861,6 @@
   // ============================================================
   //  VAULT UI
   // ============================================================
-  function showVault() {
-    document.getElementById('auth-section').style.display = 'none';
-    document.getElementById('vault-section').style.display = 'block';
-    document.getElementById('user-bar').style.display = 'flex';
-    document.getElementById('username-display').textContent = currentUser;
-    document.getElementById('l-msg').className = 'msg';
-    document.getElementById('l-msg').textContent = '';
-    document.getElementById('r-msg').className = 'msg';
-    document.getElementById('r-msg').textContent = '';
-    renderEntries();
-  }
-
   function renderEntries() {
     const q = document.getElementById('search-input').value.toLowerCase();
     const list = document.getElementById('entries-list');
@@ -500,22 +876,22 @@
     }
 
     list.innerHTML = filtered.map(e => `
-    <div class="entry">
-      <div><div class="entry-label">Strona / nazwa</div><div class="entry-value">${esc(e.name)}</div></div>
-      <div><div class="entry-label">Login</div><div class="entry-value">${esc(e.login)}</div></div>
-      <div>
-        <div class="entry-label">Hasło <span style="font-size:.7rem;color:var(--muted)">(Kliknij aby pokazać)</span></div>
-        <div class="entry-value entry-pass" title="kliknij aby pokazać/ukryć"
-     data-password="${esc(e.password)}"
-     onclick="this.classList.toggle('show'); this.textContent = this.classList.contains('show') ? this.dataset.password : '••••••••'">••••••••</div>
+      <div class="entry">
+        <div><div class="entry-label">Strona / nazwa</div><div class="entry-value">${esc(e.name)}</div></div>
+        <div><div class="entry-label">Login</div><div class="entry-value">${esc(e.login)}</div></div>
+        <div>
+          <div class="entry-label">Hasło <span style="font-size:.7rem;color:var(--muted)">(Kliknij aby pokazać)</span></div>
+          <div class="entry-value entry-pass" title="kliknij aby pokazać/ukryć"
+            data-password="${esc(e.password)}"
+            onclick="this.classList.toggle('show'); this.textContent = this.classList.contains('show') ? this.dataset.password : '••••••••'">••••••••</div>
+        </div>
+        <div class="entry-actions">
+          <button class="icon-btn" onclick="copyPass('${esc(e.id)}', this)" title="Kopiuj hasło">📋</button>
+          <button class="icon-btn" onclick="editEntry('${esc(e.id)}')" title="Edytuj">✏️</button>
+          <button class="icon-btn del" onclick="deleteEntry('${esc(e.id)}')" title="Usuń">🗑</button>
+        </div>
       </div>
-      <div class="entry-actions">
-        <button class="icon-btn" onclick="copyPass('${esc(e.id)}', this)" title="Kopiuj hasło">📋</button>
-        <button class="icon-btn" onclick="editEntry('${esc(e.id)}')" title="Edytuj">✏️</button>
-        <button class="icon-btn del" onclick="deleteEntry('${esc(e.id)}')" title="Usuń">🗑</button>
-      </div>
-    </div>
-  `).join('');
+    `).join('');
   }
 
   function copyPass(id, btn) {
@@ -525,15 +901,10 @@
     const original = btn.textContent;
     btn.textContent = 'Skopiowano!';
     btn.style.color = 'var(--green)';
-    setTimeout(() => {
-      btn.textContent = original;
-      btn.style.color = '';
-    }, 1500);
+    setTimeout(() => { btn.textContent = original; btn.style.color = ''; }, 1500);
   }
 
-  function deleteEntry(id) {
-    openDeleteModal(id);
-  }
+  function deleteEntry(id) { openDeleteModal(id); }
 
   function openDeleteModal(id) {
     deletingId = id;
@@ -580,9 +951,7 @@
     document.getElementById('modal').classList.add('open');
   }
 
-  function closeModal() {
-    document.getElementById('modal').classList.remove('open');
-  }
+  function closeModal() { document.getElementById('modal').classList.remove('open'); }
 
   document.getElementById('modal').addEventListener('click', e => {
     if (e.target === document.getElementById('modal')) closeModal();
@@ -669,6 +1038,12 @@
     label.style.color = LEVELS[s].color;
   }
 
+  function renderUsers() {
+    const tbody = document.getElementById('users-tbody');
+    if (!tbody) return;
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:40px">Wkrótce dostępne</td></tr>`;
+  }
+
   // ============================================================
   //  UTILS
   // ============================================================
@@ -686,16 +1061,5 @@
   document.getElementById('l-pass').addEventListener('keydown', e => { if (e.key==='Enter') doLogin(); });
   document.getElementById('r-pass2').addEventListener('keydown', e => { if (e.key==='Enter') doRegister(); });
 </script>
-<div class="modal-backdrop" id="delete-modal">
-  <div class="modal">
-    <h3>Usuń wpis</h3>
-    <p style="color:var(--muted);margin-bottom:20px">Czy na pewno chcesz usunąć ten wpis? Tej operacji nie można cofnąć.</p>
-    <div style="display:flex;gap:10px">
-      <button class="btn danger" onclick="confirmDelete()">Usuń</button>
-      <button class="btn secondary" onclick="closeDeleteModal()">Anuluj</button>
-    </div>
-  </div>
-</div>
 </body>
 </html>
-

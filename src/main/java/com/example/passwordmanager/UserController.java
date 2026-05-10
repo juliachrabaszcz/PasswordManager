@@ -107,6 +107,13 @@ public class UserController {
         HttpSessionSecurityContextRepository repo = new HttpSessionSecurityContextRepository();
         repo.saveContext(SecurityContextHolder.getContext(), request, response);
 
-        return ResponseEntity.ok(Map.of("status", "ok", "username", username, "salt", userOpt.get().getSalt()));
+        return ResponseEntity.ok(Map.of(
+                "status", "ok",
+                "username", username,
+                "salt", user.getSalt(),
+                "role", user.getRole(),
+                "createdAt", user.getCreatedAt() != null ? user.getCreatedAt().toString() : "",
+                "lastLogin", user.getLastLogin() != null ? user.getLastLogin().toString() : ""
+        ));
     }
 }
