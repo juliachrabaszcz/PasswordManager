@@ -741,6 +741,7 @@
   let currentUser = null;
   let currentRole = null;
   let currentKey = null;
+  let currentSalt = null;
   let vaultData = { entries: [] };
   let editingId = null;
   let saveTimeout = null;
@@ -839,6 +840,7 @@
         currentCreatedAt = data.createdAt;
         currentLastLogin = data.lastLogin;
         currentKey = await deriveKey(password, data.salt);
+        currentSalt = data.salt;
         await loadVault();
         showApp();
       } else {
@@ -1582,6 +1584,27 @@
     if (oldPassword === newPassword) return showMsg(msg, 'err', 'Nowe hasło nie może być takie samo jak obecne');
 
     try {
+      const vaultRes = await fetch(`/api/vault/${currentUser}`, { credentials: 'include' });
+      const vaultJson = await vaultRes.json();
+
+      let reencryptedBlob = null;
+
+      if (vaultJson.encryptedData) {
+        const parsedBlob = JSON.parse(vaultJson.encryptedData);
+        const decryptedStr = await decryptData(parsedBlob.ciphertext, parsedBlob.iv, currentKey);
+
+        const newKey = await deriveKey(newPassword, currentSalt);
+
+        const reencrypted = await encryptData(decryptedStr, newKey);
+        reencryptedBlob = JSON.stringify({ ciphertext: reencrypted.ciphertext, iv: reencrypted.iv });
+
+        await fetch(`/api/vault/${currentUser}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ encryptedData: reencryptedBlob })
+        });
+      }
       const res = await fetch('/api/users/change-password', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
